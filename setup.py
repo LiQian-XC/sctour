@@ -13,7 +13,7 @@ setuptools.setup(
         'numpy',
         'scanpy',
         'anndata',
-        'scipy'
+        'scipy',
         'tqdm',
     ]
 )
