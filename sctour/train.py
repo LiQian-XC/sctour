@@ -15,6 +15,11 @@ from ._utils import get_step_size
 from .data import split_data, MakeDataset
 
 
+##reverse time
+def reverse_time(t):
+    return 1 - t
+
+
 class Trainer:
     """
     The Trainer class for the implementation of the training process

@@ -82,8 +82,3 @@ def l2_norm(x, axis=-1):
         return np.sqrt(x.multiply(x).sum(axis=axis).A1)
     else:
         return np.sqrt(np.sum(x * x, axis = axis))
-
-
-##reverse time
-def reverse_time(t):
-    return 1 - t
