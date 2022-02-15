@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name='scTour',
+    name='sctour',
     version='0.0.1',
     author='Qian Li',
     author_email='liqian.picb@gmail.com',
