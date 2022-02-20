@@ -29,7 +29,7 @@ def split_data(
 
     n_cells = adata.n_obs
     n_train = int(np.ceil(n_cells * percent))
-    n_val = int(np.ceil(n_train * val_frac))
+    n_val = min(int(np.floor(n_train * val_frac)), n_cells - n_train)
 
     indices = np.random.permutation(n_cells)
     train_idx = np.random.choice(indices, n_train, replace = False)
