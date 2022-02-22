@@ -278,6 +278,8 @@ def plot_vector_field(
     smooth: float = 0.5,
     grid: bool = False,
     stream: bool = True,
+    stream_density: int = 2,
+    stream_color: str = 'k',
     density: float = 1.,
     arrow_size_grid: int = 5,
     color: Optional[str] = None,
@@ -320,6 +322,10 @@ def plot_vector_field(
         Whether to draw grid-level vector field
     stream
         Whether to draw streamplot
+    stream_density
+        The density parameter for streamplot for controlling the closeness of the streamlines
+    stream_color
+        The streamline color for streamplot
     density
         Percentage of cell positions to show
     arrow_size_grid
@@ -376,9 +382,9 @@ def plot_vector_field(
         linewidth = 2 * lengths / lengths[~np.isnan(lengths)].max()
         stream_kwargs = dict(
             linewidth = linewidth,
-            density = 2,
+            density = stream_density,
             zorder = 3,
-            color = 'k',
+            color = stream_color,
             arrowsize = 1,
             arrowstyle = '-|>',
             maxlength = 4,
