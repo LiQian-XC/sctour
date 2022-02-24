@@ -71,7 +71,7 @@ def cosine_similarity(
         indices_matrix2 = np.zeros(indices_matrix.shape, dtype = int)
         for i in range(ncells):
             idx = np.abs(ts - ts[i]).argsort()[:(n_neigh + 1)]
-            idx = np.setdiff1d(idx, i)
+            idx = np.setdiff1d(idx, i) if i in idx else idx[:-1]
             indices_matrix2[i] = idx
         indices_matrix = np.hstack([indices_matrix, indices_matrix2])
 
