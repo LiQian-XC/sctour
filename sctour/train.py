@@ -520,7 +520,10 @@ class Trainer:
     def predict_transcriptome(
         self,
         T: float,
+        step_wise: bool = True,
         step_size: Optional[int] = None,
+        alpha_z: float = 0.5,
+        alpha_predz: float = 0.5,
         k: int = 5,
         model: Optional[str] = None,
     ):
@@ -531,8 +534,14 @@ class Trainer:
         ----------
         T
             Time points with values between 0 and 1
+        step_wise
+            Whether to perform step-wise integration by providing just two time points at a time for training data
         step_size
             The step size during integration
+        alpha_z
+            Scaling factor for encoder-derived latent space for training data
+        alpha_predz
+            Scaling factor for NODE-predicted latent space for training data
         k
             The k nearest neighbors used to estimate the latent space
         model
@@ -549,9 +558,10 @@ class Trainer:
 
         T = torch.tensor(T).to(self.device)
         ## get the time and latent space of the original data
-        mix_zs, zs, pred_zs = self.get_latentsp(step_wise = True, step_size = step_size, model = model)
+        mix_zs, zs, pred_zs = self.get_latentsp(step_wise = step_wise, step_size = step_size, model = model, alpha_z = alpha_z, alpha_predz = alpha_predz)
         ts = self.predict_time(self.adata, get_ltsp = False, model = model)
-        zs = torch.tensor(zs).to(self.device)
+#       zs = torch.tensor(zs).to(self.device)
+        zs = torch.tensor(mix_zs).to(self.device)
         ts = torch.tensor(ts).to(self.device)
 
         pred_T_zs = torch.empty((len(T), model.n_latent))
@@ -581,7 +591,8 @@ class Trainer:
             ts = torch.cat((ts, t.unsqueeze(0)))
             zs = torch.cat((zs, k_zs.unsqueeze(0).to(self.device)))
 
-        return pred_T_zs.numpy(), pred_zs
+#       return pred_T_zs.numpy(), pred_zs
+        return pred_T_zs.numpy()
 
 
     def get_model(self, model):
