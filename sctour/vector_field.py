@@ -411,6 +411,6 @@ def plot_vector_field(
         )
         ax.quiver(E[:, 0], E[:, 1], V[:, 0], V[:, 1], **quiver_kwargs)
 
-    ax = sc.pl.umap(adata, color = color, ax = ax, show = False, **kwargs)
+    ax = sc.pl.embedding(adata, basis = E_key, color = color, ax = ax, show = False, **kwargs)
 
     return ax
