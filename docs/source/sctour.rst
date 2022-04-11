@@ -6,31 +6,7 @@ sctour
    :undoc-members:
    :show-inheritance:
 
-sctour.data module
-------------------
-
-.. automodule:: sctour.data
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-sctour.model module
--------------------
-
-.. automodule:: sctour.model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-sctour.module module
---------------------
-
-.. automodule:: sctour.module
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-sctour.train module
+Model training
 -------------------
 
 .. automodule:: sctour.train
@@ -38,7 +14,7 @@ sctour.train module
    :undoc-members:
    :show-inheritance:
 
-sctour.vector\_field module
+Vector field visualization
 ---------------------------
 
 .. automodule:: sctour.vector_field
