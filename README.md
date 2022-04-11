@@ -7,7 +7,7 @@ scTour is an innovative and comprehensive method for dissecting cellular dynamic
 
 # Preprint
 
-Considering cite this [paper](https://NNN) if you use scTour in your analysis.
+Consider citing this [paper](https://NNN) if you use scTour in your analysis.
 
 # scTour features
 
@@ -15,13 +15,13 @@ Considering cite this [paper](https://NNN) if you use scTour in your analysis.
 - efficient inference of vector field with no dependence on the discrimination between spliced and unspliced mRNAs
 - cell trajectory reconstruction using latent space that incorporates both intrinsic transcriptome and extrinsic time information
 - model-based prediction of pseudotime, vector field, and latent space for query cells/datasets
-- Reconstruction of transcriptomic space given an unobserved time interval
+- reconstruction of transcriptomic space given an unobserved time interval
 
 # scTour performance
 
-- [x] insensitive to batch effects
-- [x] robust to cell subsampling
-- [x] scalable to large datasets
+✅ insensitive to batch effects
+✅ robust to cell subsampling
+✅ scalable to large datasets
 
 # Installation
 
