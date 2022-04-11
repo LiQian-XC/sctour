@@ -1,6 +1,3 @@
-sctour
-==============
-
 .. automodule:: sctour
    :members:
    :undoc-members:

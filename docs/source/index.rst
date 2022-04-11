@@ -7,7 +7,7 @@ Welcome to sctour's documentation!
 ==================================
 
 .. include:: ../../README.md
-   :parser: myst_parser.sphinx
+   :parser: myst_parser.sphinx_
    :end-before: Documentation
 
 .. toctree::
@@ -15,8 +15,8 @@ Welcome to sctour's documentation!
    :caption: Tutorials:
    :hidden:
 
-   notebook/tutorial1
-   notebook/tutorial2
+   notebook/celltypist_tutorial
+   notebook/celltypist_tutorial_cv
    
 .. toctree::
    :maxdepth: 2
