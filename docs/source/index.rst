@@ -6,9 +6,21 @@
 Welcome to sctour's documentation!
 ==================================
 
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx
+   :end-before: Documentation
+
 .. toctree::
    :maxdepth: 2
-   :caption: Package organization:
+   :caption: Tutorials:
    :hidden:
+
+   notebook/tutorial1
+   notebook/tutorial2
    
+.. toctree::
+   :maxdepth: 2
+   :caption: Main API:
+   :hidden:
+
    sctour

@@ -6,7 +6,7 @@ sctour
    :undoc-members:
    :show-inheritance:
 
-Model training
+Model training and prediction
 -------------------
 
 .. automodule:: sctour.train

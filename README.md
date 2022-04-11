@@ -19,8 +19,10 @@ Consider citing this [paper](https://NNN) if you use scTour in your analysis.
 
 # scTour performance
 
-✅ insensitive to batch effects
-✅ robust to cell subsampling
+✅ insensitive to batch effects  
+
+✅ robust to cell subsampling  
+
 ✅ scalable to large datasets
 
 # Installation
