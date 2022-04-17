@@ -15,8 +15,7 @@ Welcome to sctour's documentation!
    :caption: Tutorials:
    :hidden:
 
-   notebook/celltypist_tutorial
-   notebook/celltypist_tutorial_cv
+   notebook/scTour_inference_basic
    
 .. toctree::
    :maxdepth: 2
