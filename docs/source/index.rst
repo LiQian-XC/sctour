@@ -7,6 +7,7 @@ Welcome to sctour's documentation!
 ==================================
 
 .. include:: ../../README.md
+   :parser: myst_parser.sphinx_
    :end-before: Documentation
 
 .. toctree::
