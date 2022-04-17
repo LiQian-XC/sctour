@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal, kl_divergence
 from torchdiffeq import odeint
-from typing import Optional, Literal
+from typing import Optional
+from typing_extensions import Literal
 
 from .module import LatentODEfunc, Encoder, Decoder
 from ._utils import get_step_size, normal_kl, log_zinb, log_nb

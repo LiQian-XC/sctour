@@ -1,7 +1,8 @@
 import torch
 from torch.utils.data import DataLoader
 from torchdiffeq import odeint
-from typing import Optional, Union, Literal
+from typing import Optional, Union
+from typing_extensions import Literal
 import numpy as np
 from anndata import AnnData
 from scipy import sparse
