@@ -2,3 +2,5 @@
 sctour.egg-info
 build_doc.sh
 build/
+build_wheel.sh
+/dist/
