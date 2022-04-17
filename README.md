@@ -27,6 +27,8 @@ Coming soon.
 
 # Installation
 
+[![Python Versions](https://img.shields.io/badge/python-3.8+-brightgreen.svg)](https://pypi.org/project/sctour)
+
 ```console
 pip install sctour
 ```
