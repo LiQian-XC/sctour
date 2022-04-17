@@ -6,7 +6,6 @@ anndata>=0.7.5
 scipy>=1.5.2
 tqdm>=4.32.2
 sklearn
-collections
 myst_parser==0.17.0
 sphinx==3.2.1
 nbsphinx==0.8.8
