@@ -5,14 +5,16 @@ from typing import Literal
 
 class LatentODEfunc(nn.Module):
     """
-    A class modelling the latent space derivatives with respect to time
+    A class modelling the latent space derivatives with respect to time.
 
     Parameters
     ----------
     n_latent
-        The dimensionality of the latent space
+        The dimensionality of the latent space.
+        (Default: 5)
     n_hidden
-        The dimensionality of the hidden layer
+        The dimensionality of the hidden layer.
+        (Default: 25)
     """
 
     def __init__(
@@ -27,14 +29,14 @@ class LatentODEfunc(nn.Module):
 
     def forward(self, t: torch.Tensor, x: torch.Tensor):
         """
-        Compute the latent derivatives at a given time t and a given state x
+        Compute the latent derivatives at a given time t and a given state x.
 
         Parameters
         ----------
         t
-            A given time point
+            A given time point.
         x
-            A given latent state
+            A given latent state.
 
         Returns
         ----------
@@ -49,18 +51,21 @@ class LatentODEfunc(nn.Module):
 
 class Encoder(nn.Module):
     """
-    Encoder class generating the time and latent space
+    Encoder class generating the time and latent space.
 
     Parameters
     ----------
     n_int
-        The dimensionality of the input
+        The dimensionality of the input.
     n_latent
-        The dimensionality of the latent space
+        The dimensionality of the latent space.
+        (Default: 5)
     n_hidden
-        The dimensionality of the hidden layer
+        The dimensionality of the hidden layer.
+        (Default: 128)
     batch_norm
-        Whether to include `BatchNorm` layer or not
+        Whether to include `BatchNorm` layer or not.
+        (Default: `False`)
     """
 
     def __init__(
@@ -80,7 +85,7 @@ class Encoder(nn.Module):
         self.fc2 = nn.Linear(n_hidden, n_latent*2)
         self.fc3 = nn.Linear(n_hidden, 1)
 
-    def forward(self, x:torch.Tensor):
+    def forward(self, x:torch.Tensor) -> tuple:
         x = self.fc(x)
         out = self.fc2(x)
         qz_mean, qz_logvar = out[:, :self.n_latent], out[:, self.n_latent:]
@@ -90,20 +95,24 @@ class Encoder(nn.Module):
 
 class Decoder(nn.Module):
     """
-    Decoder class to reconstruct the original input based on its latent space
+    Decoder class to reconstruct the original input based on its latent space.
 
     Parameters
     ----------
     n_latent
-        The dimensionality of the latent space
+        The dimensionality of the latent space.
+        (Default: 5)
     n_int
-        The dimensionality of the original input
+        The dimensionality of the original input.
     n_hidden
-        The dimensionality of the hidden layer
+        The dimensionality of the hidden layer.
+        (Default: 128)
     batch_norm
-        Whether to include `BatchNorm` layer or not
+        Whether to include `BatchNorm` layer or not.
+        (Default: `False`)
     loss_mode
-        The mode for reconstructing the original data
+        The mode for reconstructing the original data.
+        (Default: `'mse'`)
     """
 
     def __init__(
