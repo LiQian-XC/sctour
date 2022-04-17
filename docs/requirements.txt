@@ -11,3 +11,4 @@ sphinx==3.2.1
 nbsphinx==0.8.8
 ipython_genutils==0.2.0
 Jinja2==2.11.2
+markupsafe==2.0.1
