@@ -1,11 +1,17 @@
 import setuptools
 
+def get_readme():
+    with open("README.md", "rt", encoding="utf-8") as fh:
+        return fh.read()
+
 setuptools.setup(
     name='sctour',
     version='0.1.0',
     author='Qian Li',
     author_email='liqian.picb@gmail.com',
     description='a deep learning architecture for robust inference and accurate prediction of cellular dynamics',
+    long_description=get_readme(),
+    long_description_content_type="text/markdown",
     url='https://github.com/LiQian-XC/sctour',
     packages=setuptools.find_packages(),
     install_requires=[
