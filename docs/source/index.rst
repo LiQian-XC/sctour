@@ -8,6 +8,11 @@ Welcome to sctour's documentation!
 
 .. include:: ../../README.md
    :parser: myst_parser.sphinx_
+   :end-at: manner.
+
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
+   :start-at: Preprint
    :end-before: Documentation
 
 .. toctree::
