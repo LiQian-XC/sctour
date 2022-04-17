@@ -5,7 +5,7 @@ scanpy>=1.7.1
 anndata>=0.7.5
 scipy>=1.5.2
 tqdm>=4.32.2
-sklearn>=1.0.1
+sklearn
 collections
 myst_parser==0.17.0
 sphinx==3.2.1
