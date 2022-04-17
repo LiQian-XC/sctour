@@ -21,35 +21,41 @@ def cosine_similarity(
     n_neigh: int = 20,
     t_key: Optional[str] = None,
     var_stabilize_transform: bool = False,
-):
+) -> csr_matrix:
     """
-    Calculate the cosine similarity between the vector field and the cell-neighbor latent space difference for each cell
-    The calculation borrows the ideas from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/tools/velocity_graph.py
+    Calculate the cosine similarity between the vector field and the cell-neighbor latent space difference for each cell.
+    The calculation borrows the ideas from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/tools/velocity_graph.py.
 
     Parameters
     ----------
     adata
-        The `AnnData` object
+        An :class:`~anndata.AnnData` object.
     reverse
-        Whether to reverse the direction of vector field
+        Whether to reverse the direction of vector field.
+        (Default: `False`)
     zs_key
-        The key in adata.obsm for storing the latent space
+        The key in `.obsm` for storing the latent space.
     vf_key
-        The key in adata.obsm for storing the vector field
+        The key in `.obsm` for storing the vector field.
+        (Default: `'VF'`)
     run_neigh
-        Whether to run neighbor detection
+        Whether to run neighbor detection.
+        (Default: `True`)
     use_rep_neigh
-        The representation in adata.obsm for neighbor detection
+        The representation in `.obsm` for neighbor detection.
     n_neigh
-        The number of neighbors for each cell
+        The number of neighbors for each cell.
+        (Default: 20)
     t_key:
-        The key in adata.obs for estimated time for neighbor detection
+        The key in `.obs` for estimated time for neighbor detection.
     var_stabilize_transform
-        Whether to perform variance-stabilizing transformation for vector field and cell-neighbor latent space difference
+        Whether to perform variance-stabilizing transformation for vector field and cell-neighbor latent space difference.
+        (Default: `False`)
 
     Returns
     ----------
-        A sparse matrix with cosine similarities
+    :class:`~scipy.sparse.csr_matrix`
+        A sparse matrix with cosine similarities.
     """
 
     Z = adata.obsm[f'X_{zs_key}']
@@ -99,19 +105,19 @@ def quiver_autoscale(
     V: np.ndarray,
 ):
     """
-    Get the autoscaling in quiver
-    This function is from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/tools/velocity_embedding.py
+    Get the autoscaling in quiver.
+    This function is from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/tools/velocity_embedding.py.
 
     Parameters
     ----------
     E
-        The embedding
+        The embedding.
     V
-        The weighted unitary displacement
+        The weighted unitary displacement.
 
     Returns
     ----------
-    The autoscaling factor
+    The autoscaling factor.
     """
 
     fig, ax = plt.subplots()
@@ -140,25 +146,27 @@ def vector_field_embedding(
     self_transition: bool = False,
 ):
     """
-    Calculate the weighted unitary displacement vectors under a certain embedding
-    This function borrows the ideas from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/tools/velocity_embedding.py
+    Calculate the weighted unitary displacement vectors under a certain embedding.
+    This function borrows the ideas from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/tools/velocity_embedding.py.
 
     Parameters
     ----------
     adata
-        The `AnnData` object
+        An :class:`~anndata.AnnData` object.
     T_key
-        The key in adata.obsp for cosine similarity
+        The key in adata.obsp for cosine similarity.
     E_key
-        The key in adata.obsm for embedding
+        The key in adata.obsm for embedding.
     scale
-        Scale factor for cosine similarity
+        Scale factor for cosine similarity.
+        (Default: 10)
     self_transition
-        Whether to take self-transition into consideration
+        Whether to take self-transition into consideration.
+        (Default: `False`)
 
     Returns
     ----------
-    The weighted unitary displacement vectors
+    The weighted unitary displacement vectors.
     """
 
     T = adata.obsp[T_key]
@@ -195,25 +203,28 @@ def vector_field_embedding_grid(
     V: np.ndarray,
     smooth: float = 0.5,
     stream: bool = False,
-):
+) -> tuple:
     """
-    Estimate the unitary displacement vectors within a grid
-    This function borrows the ideas from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/plotting/velocity_embedding_grid.py
+    Estimate the unitary displacement vectors within a grid.
+    This function borrows the ideas from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/plotting/velocity_embedding_grid.py.
 
     Parameters
     ----------
     E
-        The embedding
+        The embedding.
     V
-        The unitary displacement vectors under the embedding
+        The unitary displacement vectors under the embedding.
     smooth
-        The factor for scale in Gaussian kernel
+        The factor for scale in Gaussian kernel.
+        (Default: 0.5)
     stream
-        Whether to adjust for streamplot
+        Whether to adjust for streamplot.
+        (Default: `False`)
 
     Returns
     ----------
-        The embedding and unitary displacement vectors in grid level
+    tuple
+        The embedding and unitary displacement vectors in grid level.
     """
 
     grs = []
@@ -289,55 +300,55 @@ def plot_vector_field(
     **kwargs,
 ):
     """
-    Plot the vector field
-    The visulization of vector field under an embedding borrows the ideas from scvelo: https://github.com/theislab/scvelo
+    Plot the vector field.
+    The visulization of vector field under an embedding borrows the ideas from scvelo: https://github.com/theislab/scvelo.
 
     Parameters
     ----------
     adata
-        The `AnnData` object
+        An :class:`~anndata.AnnData` object.
     reverse
-        Whether to reverse the direction of vector field
+        Whether to reverse the direction of vector field.
     zs_key
-        The key in adata.obsm for storing the latent space
+        The key in `.obsm` for storing the latent space.
     vf_key
-        The key in adata.obsm for storing the vector field
+        The key in `.obsm` for storing the vector field.
     run_neigh
-        Whether to run neighbor detection
+        Whether to run neighbor detection.
     use_rep_neigh
-        The representation in adata.obsm for neighbor detection
+        The representation in `.obsm` for neighbor detection.
     t_key:
-        The key in adata.obs for estimated time for neighbor detection
+        The key in `.obs` for estimated time for neighbor detection.
     n_neigh
-        The number of neighbors for each cell
+        The number of neighbors for each cell.
     var_stabilize_transform
-        Whether to perform variance-stabilizing transformation for vector field and cell-neighbor latent space difference
+        Whether to perform variance-stabilizing transformation for vector field and cell-neighbor latent space difference.
     E_key
-        The key in adata.obsm for embedding
+        The key in `.obsm` for embedding.
     scale
-        Scale factor for cosine similarity
+        Scale factor for cosine similarity.
     self_transition
-        Whether to take self-transition into consideration
+        Whether to take self-transition into consideration.
     smooth
-        The factor for scale in Gaussian kernel
+        The factor for scale in Gaussian kernel.
     grid
-        Whether to draw grid-level vector field
+        Whether to draw grid-level vector field.
     stream
-        Whether to draw streamplot
+        Whether to draw streamplot.
     stream_density
-        The density parameter for streamplot for controlling the closeness of the streamlines
+        The density parameter for streamplot for controlling the closeness of the streamlines.
     stream_color
-        The streamline color for streamplot
+        The streamline color for streamplot.
     linewidth
-        The line width for streamplot
+        The line width for streamplot.
     arrowsize
-        The arrow size for streamplot
+        The arrow size for streamplot.
     density
-        Percentage of cell positions to show
+        Percentage of cell positions to show.
     arrow_size_grid
-        The arrow size in grid-level vector field
+        The arrow size in grid-level vector field.
     color
-        `color` parameter in :func:`scanpy.pl.umap`
+        `color` parameter in :func:`scanpy.pl.umap`.
     ax
         The matplotlib axes
     kwargs
@@ -345,7 +356,8 @@ def plot_vector_field(
 
     Returns
     ----------
-        `matplotlib.Axis`
+    :class:`~matplotlib.axes.Axes`
+        An :class:`~matplotlib.axes.Axes` object.
     """
 
     ##calculate cosine similarity
