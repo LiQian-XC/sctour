@@ -3,11 +3,11 @@
 
 scTour is an innovative and comprehensive method for dissecting cellular dynamics by analysing datasets derived from single-cell genomics. It provides a unifying framework to depict the full picture of developmental processes from multiple angles including developmental pseudotime, vector field and latent space, and further generalises these functionalities to a multi-task architecture for within-dataset inference and cross-dataset prediction of cellular dynamics in a batch-insensitive manner.
 
-<p align="center"><img src="docs/source/_static/img/scTour_head_image.png" width="700px" align="center"></p>
+<p align="center"><img src="https://github.com/LiQian-XC/sctour/blob/main/docs/source/_static/img/scTour_head_image.png" width="700px" align="center"></p>
 
 # Preprint
 
-Consider citing this [paper](https://NNN) if you use scTour in your analysis.
+Coming soon.
 
 # scTour features
 
