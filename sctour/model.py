@@ -11,32 +11,41 @@ from ._utils import get_step_size, normal_kl, log_zinb, log_nb
 
 class TNODE(nn.Module):
     """
-    A class to automatically predict the time and transcriptomes of cells using VAE and NODE
+    Class to automatically predict the time and transcriptomes of cells using VAE and NODE.
 
     Parameters
     ----------
     n_int
-        The dimensionality of the input
+        The dimensionality of the input.
     n_latent
-        The dimensionality of the latent space
+        The dimensionality of the latent space.
+        (Default: 5)
     n_ode_hidden
-        The dimensionality of the hidden layer for the latent NODE
+        The dimensionality of the hidden layer for the latent NODE.
+        (Default: 25)
     n_vae_hidden
-        The dimensionality of the hidden layer for the VAE
+        The dimensionality of the hidden layer for the VAE.
+        (Default: 128)
     batch_norm
-        Whether to include `BatchNorm` layer or not
+        Whether to include `BatchNorm` layer.
+        (Default: `False`)
     ode_method
-        Solver for integration
+        Solver for integration.
+        (Default: `'euler'`)
     step_size
-        The step size during integration
+        The step size during integration.
     alpha_recon_lec
-        Scaling factor for reconstruction loss from encoder-derived latent space
+        Scaling factor for reconstruction loss from encoder-derived latent space.
+        (Default: 0.5)
     alpha_recon_lode
-        Scaling factor for reconstruction loss from NODE-predicted latent space
+        Scaling factor for reconstruction loss from NODE-predicted latent space.
+        (Default: 0.5)
     alpha_kl
-        Scaling factor for KL divergence
+        Scaling factor for KL divergence.
+        (Default: 1.0)
     loss_mode
-        The mode for reconstructing the original data in Decoder
+        The mode for reconstructing the original data in Decoder.
+        (Default: `'mse'`)
     """
 
     def __init__(
@@ -70,16 +79,16 @@ class TNODE(nn.Module):
         self.encoder = Encoder(n_int, n_latent, n_vae_hidden, batch_norm)
         self.decoder = Decoder(n_int, n_latent, n_vae_hidden, batch_norm, loss_mode)
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor):
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> tuple:
         """
-        Given the transcriptomes of cells, this function predicts the time and latent space of the cells, as well as reconstructs the transcriptomes
+        Given the transcriptomes of cells, this function predicts the time and latent space of the cells, as well as reconstructs the transcriptomes.
 
         Parameters
         ----------
         x
-            The input data
+            The input data.
         y
-            The library size
+            The library size.
 
         Returns
         ----------
@@ -121,7 +130,7 @@ class TNODE(nn.Module):
             pred_x2 = self.decoder(pred_z) ## decode through predicted latent space returned by NODE
             recon_loss_ec = F.mse_loss(x, pred_x1, reduction='none').sum(-1).mean()
             recon_loss_ode = F.mse_loss(x, pred_x2, reduction='none').sum(-1).mean()
-        if self.loss_mode == 'nb':
+        elif self.loss_mode == 'nb':
             pred_x1 = self.decoder(z) ## decode through latent space returned by Encoder
             pred_x2 = self.decoder(pred_z) ## decode through predicted latent space returned by NODE
             y = y.unsqueeze(1).expand(pred_x1.size(0), pred_x1.size(1))
@@ -130,7 +139,7 @@ class TNODE(nn.Module):
             disp = torch.exp(self.decoder.disp)
             recon_loss_ec = -log_nb(x, pred_x1, disp).sum(-1).mean()
             recon_loss_ode = -log_nb(x, pred_x2, disp).sum(-1).mean()
-        if self.loss_mode == 'zinb':
+        elif self.loss_mode == 'zinb':
             pred_x1, dp1 = self.decoder(z)
             pred_x2, dp2 = self.decoder(pred_z)
             y = y.unsqueeze(1).expand(pred_x1.size(0), pred_x1.size(1))
@@ -139,6 +148,8 @@ class TNODE(nn.Module):
             disp = torch.exp(self.decoder.disp)
             recon_loss_ec = -log_zinb(x, pred_x1, disp, dp1).sum(-1).mean()
             recon_loss_ode = -log_zinb(x, pred_x2, disp, dp2).sum(-1).mean()
+        else:
+            raise ValueError(f"Unrecognized `'loss_mode'` value, should be one of `'mse'`, `'nb'` and `'zinb'`.")
 
         ## compute KL divergence and z divergence
         z_div = F.mse_loss(z, pred_z, reduction='none').sum(-1).mean()
