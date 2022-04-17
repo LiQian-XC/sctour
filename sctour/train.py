@@ -34,7 +34,7 @@ class Trainer:
         The dimensionality of the latent space.
         (Default: 5)
     n_ode_hidden
-        The dimensionality of the hidden layer for the NODE.
+        The dimensionality of the hidden layer for the latent ODE function.
         (Default: 25)
     n_vae_hidden
         The dimensionality of the hidden layer for the VAE.
@@ -51,7 +51,7 @@ class Trainer:
         The scaling factor for the reconstruction loss from encoder-derived latent space.
         (Default: 0.5)
     alpha_recon_lode
-        The scaling factor for the reconstruction loss from NODE-predicted latent space.
+        The scaling factor for the reconstruction loss from ODE-solver latent space.
         (Default: 0.5)
     alpha_kl
         The scaling factor for the KL divergence.
@@ -361,7 +361,7 @@ class Trainer:
         model: Optional[str] = None,
     ):
         """
-        Get the latent space representations.
+        Get the latent representations.
 
         Parameters
         ----------
@@ -371,7 +371,7 @@ class Trainer:
             Scaling factor for encoder-derived latent space.
             (Default: 0.5)
         alpha_predz
-            Scaling factor for NODE-predicted latent space.
+            Scaling factor for ODE-solver latent space.
             (Default: 0.5)
         step_size
             Step size during integration.
@@ -386,7 +386,7 @@ class Trainer:
         Returns
         ----------
         tuple
-            3-tuple of mixed latent space, encoder-derived latent space, and NODE-predicted latent space.
+            3-tuple of mixed latent space, encoder-derived latent space, and ODE-solver latent space.
         """
 
         model = self.get_model(model)
@@ -478,7 +478,7 @@ class Trainer:
         alpha_z
             Scaling factor for encoder-derived latent space.
         alpha_predz
-            Scaling factor for NODE-predicted latent space.
+            Scaling factor for ODE-solver latent space.
         step_size
             The step size during integration.
         step_wise
@@ -568,7 +568,7 @@ class Trainer:
             Scaling factor for encoder-derived latent space for training data.
             (Default: 0.5)
         alpha_predz
-            Scaling factor for NODE-predicted latent space for training data.
+            Scaling factor for ODE-solver latent space for training data.
             (Default: 0.5)
         k
             The k nearest neighbors used to estimate the latent space.
@@ -579,7 +579,7 @@ class Trainer:
         Returns
         ----------
         :class:`~numpy.ndarray`
-            Predicted latent space and transcriptome.
+            Predicted latent space.
         """
 
         model = self.get_model(model)

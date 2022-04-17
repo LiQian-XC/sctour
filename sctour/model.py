@@ -11,7 +11,7 @@ from ._utils import get_step_size, normal_kl, log_zinb, log_nb
 
 class TNODE(nn.Module):
     """
-    Class to automatically predict the time and transcriptomes of cells using VAE and NODE.
+    Class to automatically infer cellular dynamics using VAE and neural ODE.
 
     Parameters
     ----------
@@ -21,7 +21,7 @@ class TNODE(nn.Module):
         The dimensionality of the latent space.
         (Default: 5)
     n_ode_hidden
-        The dimensionality of the hidden layer for the latent NODE.
+        The dimensionality of the hidden layer for the latent ODE function.
         (Default: 25)
     n_vae_hidden
         The dimensionality of the hidden layer for the VAE.
@@ -38,14 +38,14 @@ class TNODE(nn.Module):
         Scaling factor for reconstruction loss from encoder-derived latent space.
         (Default: 0.5)
     alpha_recon_lode
-        Scaling factor for reconstruction loss from NODE-predicted latent space.
+        Scaling factor for reconstruction loss from ODE-solver latent space.
         (Default: 0.5)
     alpha_kl
         Scaling factor for KL divergence.
         (Default: 1.0)
     loss_mode
-        The mode for reconstructing the original data in Decoder.
-        (Default: `'mse'`)
+        The mode for calculating the reconstruction error.
+        (Default: `'nb'`)
     """
 
     def __init__(
@@ -96,9 +96,9 @@ class TNODE(nn.Module):
             Tensors for loss, including:
             1) total loss,
             2) reconstruction loss from encoder-derived latent space,
-            3) reconstruction loss from NODE-predicted latent space,
+            3) reconstruction loss from ODE-solver latent space,
             4) KL divergence,
-            5) divergence between encoder-derived latent space and NODE-predicted latent space
+            5) divergence between encoder-derived latent space and ODE-solver latent space
         """
 
         ## get the time and latent space through Encoder
@@ -119,7 +119,7 @@ class TNODE(nn.Module):
         z = z[index2]
         y = y[index2]
 
-        ## predict the latent space through NODE based on z0, t, and LatentODEfunc
+        ## infer the latent space through ODE solver based on z0, t, and LatentODEfunc
         z0 = z[0]
         options = get_step_size(self.step_size, T[0], T[-1], len(T))
         pred_z = odeint(self.lode_func, z0, T, method = self.ode_method, options = options).view(-1, self.n_latent)
@@ -127,12 +127,12 @@ class TNODE(nn.Module):
         ## reconstruct the input through Decoder and compute reconstruction loss
         if self.loss_mode == 'mse':
             pred_x1 = self.decoder(z) ## decode through latent space returned by Encoder
-            pred_x2 = self.decoder(pred_z) ## decode through predicted latent space returned by NODE
+            pred_x2 = self.decoder(pred_z) ## decode through latent space returned by ODE solver
             recon_loss_ec = F.mse_loss(x, pred_x1, reduction='none').sum(-1).mean()
             recon_loss_ode = F.mse_loss(x, pred_x2, reduction='none').sum(-1).mean()
         elif self.loss_mode == 'nb':
             pred_x1 = self.decoder(z) ## decode through latent space returned by Encoder
-            pred_x2 = self.decoder(pred_z) ## decode through predicted latent space returned by NODE
+            pred_x2 = self.decoder(pred_z) ## decode through latent space returned by ODE solver
             y = y.unsqueeze(1).expand(pred_x1.size(0), pred_x1.size(1))
             pred_x1 = pred_x1 * y
             pred_x2 = pred_x2 * y

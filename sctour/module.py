@@ -5,7 +5,7 @@ from typing import Literal
 
 class LatentODEfunc(nn.Module):
     """
-    A class modelling the latent space derivatives with respect to time.
+    A class modelling the latent state derivatives with respect to time.
 
     Parameters
     ----------
@@ -29,7 +29,7 @@ class LatentODEfunc(nn.Module):
 
     def forward(self, t: torch.Tensor, x: torch.Tensor):
         """
-        Compute the latent derivatives at a given time t and a given state x.
+        Compute the gradient at a given time t and a given state x.
 
         Parameters
         ----------
@@ -112,7 +112,7 @@ class Decoder(nn.Module):
         (Default: `False`)
     loss_mode
         The mode for reconstructing the original data.
-        (Default: `'mse'`)
+        (Default: `'nb'`)
     """
 
     def __init__(

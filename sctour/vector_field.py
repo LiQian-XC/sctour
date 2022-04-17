@@ -23,7 +23,7 @@ def cosine_similarity(
     var_stabilize_transform: bool = False,
 ) -> csr_matrix:
     """
-    Calculate the cosine similarity between the vector field and the cell-neighbor latent space difference for each cell.
+    Calculate the cosine similarity between the vector field and the cell-neighbor latent state difference for each cell.
     The calculation borrows the ideas from scvelo: https://github.com/theislab/scvelo/blob/master/scvelo/tools/velocity_graph.py.
 
     Parameters
@@ -49,7 +49,7 @@ def cosine_similarity(
     t_key:
         The key in `.obs` for estimated time for neighbor detection.
     var_stabilize_transform
-        Whether to perform variance-stabilizing transformation for vector field and cell-neighbor latent space difference.
+        Whether to perform variance-stabilizing transformation for vector field and cell-neighbor latent state difference.
         (Default: `False`)
 
     Returns
@@ -154,9 +154,9 @@ def vector_field_embedding(
     adata
         An :class:`~anndata.AnnData` object.
     T_key
-        The key in adata.obsp for cosine similarity.
+        The key in `.obsp` for cosine similarity.
     E_key
-        The key in adata.obsm for embedding.
+        The key in `.obsm` for embedding.
     scale
         Scale factor for cosine similarity.
         (Default: 10)
@@ -300,7 +300,7 @@ def plot_vector_field(
     **kwargs,
 ):
     """
-    Plot the vector field.
+    Visualize the vector field.
     The visulization of vector field under an embedding borrows the ideas from scvelo: https://github.com/theislab/scvelo.
 
     Parameters
@@ -322,7 +322,7 @@ def plot_vector_field(
     n_neigh
         The number of neighbors for each cell.
     var_stabilize_transform
-        Whether to perform variance-stabilizing transformation for vector field and cell-neighbor latent space difference.
+        Whether to perform variance-stabilizing transformation for vector field and cell-neighbor latent state difference.
     E_key
         The key in `.obsm` for embedding.
     scale
