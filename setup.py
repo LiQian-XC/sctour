@@ -22,8 +22,7 @@ setuptools.setup(
         'anndata>=0.7.5',
         'scipy>=1.5.2',
         'tqdm>=4.32.2',
-        'sklearn>=1.0.1',
-        'collections',
+        'scikit-learn>=0.24.1',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
