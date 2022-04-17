@@ -1,0 +1,14 @@
+torch>=1.9.1
+torchdiffeq>=0.2.2
+numpy>=1.19.2
+scanpy>=1.7.1
+anndata>=0.7.5
+scipy>=1.5.2
+tqdm>=4.32.2
+sklearn>=1.0.1
+collections
+myst_parser==0.17.0
+sphinx==3.2.1
+nbsphinx==0.8.8
+ipython_genutils==0.2.0
+Jinja2==2.11.2
