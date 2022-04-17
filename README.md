@@ -33,6 +33,6 @@ pip install sctour
 
 # Documentation
 
-[![Documentation Status](https://readthedocs.org/projects/sctour/badge/?version=latest [readthedocs.org])](https://sctour.readthedocs.io/en/latest/?badge=latest [sctour.readthedocs.io])
+[![Documentation Status](https://readthedocs.org/projects/sctour/badge/?version=latest)](https://sctour.readthedocs.io/en/latest/?badge=latest)
 
 Full documentation can be found [here](https://sctour.readthedocs.io/en/latest/index.html#).
