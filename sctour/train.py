@@ -22,46 +22,63 @@ def reverse_time(t):
 
 class Trainer:
     """
-    The Trainer class for the implementation of the training process
+    Class for implementing the scTour training process.
 
     Parameters
     ----------
     adata
-        The `AnnData` object
+        An :class:`~anndata.AnnData` object.
     percent
-        The percentage of the input to be used for training the model
+        The percentage of cells used for model training. Default to 0.2 when the cell number > 10,000 and to 0.9 otherwise.
     n_latent
-        The dimensionality of the latent space
+        The dimensionality of the latent space.
+        (Default: 5)
     n_ode_hidden
-        The dimensionality of the hidden layer for the NODE
+        The dimensionality of the hidden layer for the NODE.
+        (Default: 25)
     n_vae_hidden
-        The dimensionality of the hidden layer for the VAE
+        The dimensionality of the hidden layer for the VAE.
+        (Default: 128)
     batch_norm
-        Whether to include `BatchNorm` layer
+        Whether to include a `BatchNorm` layer.
+        (Default: `False`)
     ode_method
-        The solver for integration
+        The solver for integration.
+        (Default: `'euler'`)
     step_size
-        The step size during integration
+        The step size during integration.
     alpha_recon_lec
-        The scaling factor for the reconstruction loss from encoder-derived latent space
+        The scaling factor for the reconstruction loss from encoder-derived latent space.
+        (Default: 0.5)
     alpha_recon_lode
-        The scaling factor for the reconstruction loss from NODE-predicted latent space
+        The scaling factor for the reconstruction loss from NODE-predicted latent space.
+        (Default: 0.5)
     alpha_kl
-        The scaling factor for the KL divergence
+        The scaling factor for the KL divergence.
+        (Default: 1.0)
+    loss_mode
+        The mode for calculating the reconstruction error.
+        (Default: `'nb'`)
     nepoch
-        Number of epochs
+        Number of epochs.
     batch_size
-        The batch size during training
+        The batch size during training.
+        (Default: 1024)
     lr
-        The learning rate
+        The learning rate.
+        (Default: 1e-3)
     wt_decay
-        The weight decay for Adam optimizer
+        The weight decay for Adam optimizer.
+        (Default: 1e-6)
     eps
-        The eps for Adam optimizer
+        The eps for Adam optimizer.
+        (Default: 0.01)
     random_state
-        The seed for generating random numbers
+        The seed for generating random numbers.
+        (Default: 0)
     val_frac
-        The percentage of the data to be used for validation
+        The percentage of data used for validation.
+        (Default: 0.1)
     """
 
     def __init__(
@@ -141,9 +158,9 @@ class Trainer:
         self.model.to(self.device)
 
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> None:
         """
-        Generate Data Loaders for training, and validation datasets
+        Generate Data Loaders for training and validation datasets.
         """
 
         train_data, val_data = split_data(self.adata, self.percent, self.val_frac)
@@ -171,18 +188,19 @@ class Trainer:
                 t.update()
 
 
-    def on_epoch_train(self, DL):
+    def on_epoch_train(self, DL) -> float:
         """
-        Go through the model and update the model parameters
+        Go through the model and update the model parameters.
 
         Parameters
         ----------
         DL
-            DataLoader for training dataset
+            DataLoader for training dataset.
 
         Returns
         ----------
-        Training loss for the current epoch
+        float
+            Training loss for the current epoch.
         """
 
         self.model.train()
@@ -204,18 +222,19 @@ class Trainer:
 
 
     @torch.no_grad()
-    def on_epoch_val(self, DL):
+    def on_epoch_val(self, DL) -> float:
         """
-        Validate using validation dataset
+        Validate using validation dataset.
 
         Parameters
         ----------
         DL
-            DataLoader for validation dataset
+            DataLoader for validation dataset.
 
         Returns
         ----------
-        Validation loss for the current epoch
+        float
+            Validation loss for the current epoch.
         """
 
         self.model.eval()
@@ -233,13 +252,14 @@ class Trainer:
 
 
     @torch.no_grad()
-    def get_time(self):
+    def get_time(self) -> np.ndarray:
         """
-        Get the time for all cells
+        Get the time for all cells.
 
         Returns
         ----------
-        Estimated time
+        :class:`~numpy.ndarray`
+            The estimated pseudotime of cells.
         """
 
         self.model.eval()
@@ -271,20 +291,21 @@ class Trainer:
         self,
         T: np.ndarray,
         Z: np.ndarray,
-    ):
+    ) -> np.ndarray:
         """
-        Get the vector field
+        Get the vector field.
 
         Parameters
         ----------
         T
-            The estimated time for each cell
+            The estimated time for each cell.
         Z
-            The latent space for each cell
+            The latent space for each cell.
 
         Returns
         ----------
-            Vector field
+        :class:`~numpy.ndarray`
+            The estimated vector field.
         """
 
         self.model.eval()
@@ -300,16 +321,16 @@ class Trainer:
         self,
         save_dir: str,
         save_prefix: str,
-    ):
+    ) -> None:
         """
-        Save the model
+        Save the model.
 
         Parameters
         ----------
         save_dir
-            The directory where the model is saved
+            The directory where the model is saved.
         save_prefix
-            The prefix for model name
+            The prefix for model name.
         """
 
         save_path = os.path.abspath(os.path.join(save_dir, f'{save_prefix}.pth'))
@@ -340,28 +361,32 @@ class Trainer:
         model: Optional[str] = None,
     ):
         """
-        Get the latent space representations
+        Get the latent space representations.
 
         Parameters
         ----------
         X
-            The data matrix
+            The data matrix.
         alpha_z
-            Scaling factor for encoder-derived latent space
+            Scaling factor for encoder-derived latent space.
+            (Default: 0.5)
         alpha_predz
-            Scaling factor for NODE-predicted latent space
+            Scaling factor for NODE-predicted latent space.
+            (Default: 0.5)
         step_size
-            Step size during integration
+            Step size during integration.
         step_wise
-            Whether to perform step-wise integration by providing just two time points at a time
+            Whether to perform step-wise integration by providing just two time points at a time.
+            (Default: `False`)
         batch_size
-            Batch size for getting the latent space
+            Batch size for getting the latent space.
         model
-            The model used to get the latent space
+            The model used to get the latent space.
 
         Returns
         ----------
-        3-tuple of mixed latent space, encoder-derived latent space, and NODE-predicted latent space
+        tuple
+            3-tuple of mixed latent space, encoder-derived latent space, and NODE-predicted latent space.
         """
 
         model = self.get_model(model)
@@ -438,34 +463,34 @@ class Trainer:
         step_wise: bool = False,
         batch_size: Optional[int] = None,
         model: Optional[str] = None,
-    ):
+    ) -> Union[np.ndarray, tuple]:
         """
-        Predict the time of cells given their transcriptomes
+        Predict the time of cells given their transcriptomes.
 
         Parameters
         ----------
         adata
-            An `AnnData` object
+            An :class:`~anndata.AnnData` object.
         get_ltsp
-            Whether to get the latent space as well
+            Whether to get the latent space as well.
         mode
-            The method for getting the latent space
+            The method for getting the latent space.
         alpha_z
-            Scaling factor for encoder-derived latent space
+            Scaling factor for encoder-derived latent space.
         alpha_predz
-            Scaling factor for NODE-predicted latent space
+            Scaling factor for NODE-predicted latent space.
         step_size
-            The step size during integration
+            The step size during integration.
         step_wise
-            Whether to perform step-wise integration by providing just two time points at a time
+            Whether to perform step-wise integration by providing just two time points at a time.
         batch_size
-            Batch size for getting the latent space
+            Batch size for getting the latent space.
         model
-            The model used to predict the time
+            The model used to predict the time.
 
         Returns
         ----------
-        The predicted time and latent space
+        The predicted time and (if `get_ltsp = True`) the latent space.
         """
 
         model = self.get_model(model)
@@ -526,30 +551,35 @@ class Trainer:
         alpha_predz: float = 0.5,
         k: int = 5,
         model: Optional[str] = None,
-    ):
+    ) -> np.ndarray:
         """
-        Predict the transcriptomes for given time points
+        Predict the transcriptomes for given time points.
 
         Parameters
         ----------
         T
-            Time points with values between 0 and 1
+            Time points with values between 0 and 1.
         step_wise
-            Whether to perform step-wise integration by providing just two time points at a time for training data
+            Whether to perform step-wise integration by providing just two time points at a time for training data.
+            (Default: `True`)
         step_size
-            The step size during integration
+            The step size during integration.
         alpha_z
-            Scaling factor for encoder-derived latent space for training data
+            Scaling factor for encoder-derived latent space for training data.
+            (Default: 0.5)
         alpha_predz
-            Scaling factor for NODE-predicted latent space for training data
+            Scaling factor for NODE-predicted latent space for training data.
+            (Default: 0.5)
         k
-            The k nearest neighbors used to estimate the latent space
+            The k nearest neighbors used to estimate the latent space.
+            (Default: 5)
         model
-            The model used to predict the transcriptome
+            The model used to predict the transcriptome.
 
         Returns
         ----------
-        Predicted latent space and transcriptome
+        :class:`~numpy.ndarray`
+            Predicted latent space and transcriptome.
         """
 
         model = self.get_model(model)
@@ -597,7 +627,7 @@ class Trainer:
 
     def get_model(self, model):
         """
-        Get the model for inference
+        Get the model for inference.
         """
 
         if isinstance(model, str):
