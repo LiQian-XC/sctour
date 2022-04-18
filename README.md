@@ -7,7 +7,7 @@ scTour is an innovative and comprehensive method for dissecting cellular dynamic
 
 # Preprint
 
-Coming soon.
+Consider citing this [paper](https://www.biorxiv.org/content/10.1101/2022.04.17.488600v1) if you use scTour in your analysis.
 
 # scTour features
 
