@@ -6,9 +6,8 @@ anndata>=0.7.5
 scipy>=1.5.2
 tqdm>=4.32.2
 scikit-learn>=0.24.1
-myst_parser==0.17.0
-sphinx==3.2.1
+myst_parser==0.15.2
+sphinx>=3.5.2
 nbsphinx==0.8.8
 ipython_genutils==0.2.0
 jinja2<3.1
-markupsafe==2.0.1
