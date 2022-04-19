@@ -37,4 +37,4 @@ pip install sctour
 
 [![Documentation Status](https://readthedocs.org/projects/sctour/badge/?version=latest)](https://sctour.readthedocs.io/en/latest/?badge=latest)
 
-Full documentation can be found [here](https://sctour.readthedocs.io/en/latest/index.html#).
+Full documentation can be found [here](https://sctour.readthedocs.io/en/latest/).

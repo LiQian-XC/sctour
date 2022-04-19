@@ -17,7 +17,7 @@ Welcome to sctour's documentation!
 
    notebook/scTour_inference_basic
    notebook/scTour_inference_PostInference_adjustment
-   notebook/Untitled
+   notebook/Test
    
 .. toctree::
    :maxdepth: 2
