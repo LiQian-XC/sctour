@@ -80,6 +80,9 @@ class Trainer:
     val_frac
         The percentage of data used for validation.
         (Default: 0.1)
+    use_gpu
+        Whether to use GPU when available
+        (Default: True)
     """
 
     def __init__(
@@ -103,6 +106,7 @@ class Trainer:
         eps: float = 0.01,
         random_state: int = 0,
         val_frac: float = 0.1,
+        use_gpu: bool = True,
     ):
         self.loss_mode = loss_mode
         self.adata = adata
@@ -150,7 +154,7 @@ class Trainer:
         self.model = TNODE(**self.model_kwargs)
         self.log = defaultdict(list)
 
-        gpu = torch.cuda.is_available()
+        gpu = torch.cuda.is_available() and use_gpu
         if gpu:
             torch.cuda.manual_seed(random_state)
             self.device = torch.device('cuda')
@@ -273,7 +277,7 @@ class Trainer:
 
         ## The model might return reversed time. Check this based on number of genes expressed in cells
         if self.time_reverse is None:
-            n_genes = torch.tensor(self.adata.obs['n_genes_by_counts'].values).float().log()
+            n_genes = torch.tensor(self.adata.obs['n_genes_by_counts'].values).float().log().to(self.device)
             m_ts = ts.mean()
             m_ngenes = n_genes.mean()
             beta_direction = (ts * n_genes).sum() - len(ts) * m_ts * m_ngenes

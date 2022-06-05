@@ -70,23 +70,26 @@ def cosine_similarity(
     if run_neigh:
         sc.pp.neighbors(adata, use_rep = f'X_{use_rep_neigh}', n_neighbors = n_neigh)
     n_neigh = adata.uns['neighbors']['params']['n_neighbors'] - 1
-    indices_matrix = adata.obsp['distances'].indices.reshape(-1, n_neigh)
+#    indices_matrix = adata.obsp['distances'].indices.reshape(-1, n_neigh)
 
     if t_key is not None:
         ts = adata.obs[t_key].values
-        indices_matrix2 = np.zeros(indices_matrix.shape, dtype = int)
+        indices_matrix2 = np.zeros((ncells, n_neigh), dtype = int)
         for i in range(ncells):
             idx = np.abs(ts - ts[i]).argsort()[:(n_neigh + 1)]
             idx = np.setdiff1d(idx, i) if i in idx else idx[:-1]
             indices_matrix2[i] = idx
-        indices_matrix = np.hstack([indices_matrix, indices_matrix2])
+#        indices_matrix = np.hstack([indices_matrix, indices_matrix2])
 
     vals, rows, cols = [], [], []
     for i in range(ncells):
-        idx = np.unique(indices_matrix[i])
-        idx2 = indices_matrix[idx].flatten()
+#        idx = np.unique(indices_matrix[i])
+#        idx2 = indices_matrix[idx].flatten()
+#        idx2 = np.setdiff1d(idx2, i)
+        idx = adata.obsp['distances'][i].indices
+        idx2 = adata.obsp['distances'][idx].indices
         idx2 = np.setdiff1d(idx2, i)
-        idx = np.unique(np.concatenate([idx, idx2]))
+        idx = np.unique(np.concatenate([idx, idx2])) if t_key is None else np.unique(np.concatenate([idx, idx2, indices_matrix2[i]]))
         dZ = Z[idx] - Z[i, None]
         if var_stabilize_transform:
             dZ = np.sqrt(np.abs(dZ)) * np.sign(dZ)
@@ -203,6 +206,7 @@ def vector_field_embedding_grid(
     V: np.ndarray,
     smooth: float = 0.5,
     stream: bool = False,
+    density: float = 1.0,
 ) -> tuple:
     """
     Estimate the unitary displacement vectors within a grid.
@@ -220,6 +224,9 @@ def vector_field_embedding_grid(
     stream
         Whether to adjust for streamplot.
         (Default: `False`)
+    density
+        grid density
+        (Default: 1.0)
 
     Returns
     ----------
@@ -233,7 +240,7 @@ def vector_field_embedding_grid(
         diff = M - m
         m = m - 0.01 * diff
         M = M + 0.01 * diff
-        gr = np.linspace(m, M, 50)
+        gr = np.linspace(m, M, int(50 * density))
         grs.append(gr)
 
     meshes = np.meshgrid(*grs)
@@ -253,14 +260,15 @@ def vector_field_embedding_grid(
 
     if stream:
         E_grid = np.stack(grs)
-        V_grid = V_grid.T.reshape(2, 50, 50)
+        ns = int(50 * density)
+        V_grid = V_grid.T.reshape(2, ns, ns)
 
         mass = np.sqrt((V_grid * V_grid).sum(0))
         min_mass = 1e-5
         min_mass = np.clip(min_mass, None, np.percentile(mass, 99) * 0.01)
         cutoff1 = (mass < min_mass)
 
-        length = np.sum(np.mean(np.abs(V[neighs]), axis = 1), axis = 1).reshape(50, 50)
+        length = np.sum(np.mean(np.abs(V[neighs]), axis = 1), axis = 1).reshape(ns, ns)
         cutoff2 = (length < np.percentile(length, 5))
 
         cutoff = (cutoff1 | cutoff2)
@@ -294,9 +302,12 @@ def plot_vector_field(
     linewidth: int = 1,
     arrowsize: int = 1,
     density: float = 1.,
-    arrow_size_grid: int = 5,
+    arrow_size_grid: int = 1,
+    arrow_length_grid: int = 1,
+    arrow_color_grid: str = 'grey',
+    grid_density: float = 1.,
     color: Optional[str] = None,
-    ax: Optional[Axes] = None,
+#    ax: Optional[Axes] = None,
     **kwargs,
 ):
     """
@@ -347,6 +358,12 @@ def plot_vector_field(
         Percentage of cell positions to show.
     arrow_size_grid
         The arrow size in grid-level vector field.
+    arrow_length_grid
+        The arrow length in grid-level vector field
+    arrow_color_grid
+        The arrow color in grid-level vector field
+    grid_density
+        The grid-level density for showing vector field
     color
         `color` parameter in :func:`scanpy.pl.umap`.
     ax
@@ -393,8 +410,10 @@ def plot_vector_field(
                 V = V,
                 smooth = smooth,
                 stream = stream,
+                density = grid_density,
                 )
 
+    ax = sc.pl.embedding(adata, basis = E_key, color = color, show=False, **kwargs)
     if stream:
         lengths = np.sqrt((V * V).sum(0))
         linewidth *= 2 * lengths / lengths[~np.isnan(lengths)].max()
@@ -414,21 +433,23 @@ def plot_vector_field(
             idx = np.random.choice(len(E), int(len(E) * density), replace = False)
             E = E[idx]
             V = V[idx]
+        scale = 1 / arrow_length_grid
+        hl, hw, hal = 6 * arrow_size_grid, 5 * arrow_size_grid, 4 * arrow_size_grid
         quiver_kwargs = dict(
             angles = 'xy',
             scale_units = 'xy',
             edgecolors = 'k',
-            scale = 1 / arrow_size_grid,
+            scale = scale,
             width = 0.001,
-            headlength = 12,
-            headwidth = 10,
-            headaxislength = 8,
-            color = 'grey',
-            linewidth = 1,
+            headlength = hl,
+            headwidth = hw,
+            headaxislength = hal,
+            color = arrow_color_grid,
+            linewidth = 0.2,
             zorder = 3,
         )
         ax.quiver(E[:, 0], E[:, 1], V[:, 0], V[:, 1], **quiver_kwargs)
 
-    ax = sc.pl.embedding(adata, basis = E_key, color = color, ax = ax, show = False, **kwargs)
+#    ax = sc.pl.embedding(adata, basis = E_key, color = color, ax = ax, show = False, **kwargs)
 
     return ax
