@@ -1,3 +1,3 @@
 from . import train
 from . import vector_field as vf
-__version__ = '0.1.0'
+__version__ = '0.1.1'
