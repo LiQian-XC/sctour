@@ -27,7 +27,7 @@ Consider citing this [paper](https://www.biorxiv.org/content/10.1101/2022.04.17.
 
 # Installation
 
-[![Python Versions](https://img.shields.io/badge/python-3.8+-brightgreen.svg)](https://pypi.org/project/sctour)
+[![Python Versions](https://img.shields.io/badge/python-3.7+-brightgreen.svg)](https://pypi.org/project/sctour)
 
 ```console
 pip install sctour

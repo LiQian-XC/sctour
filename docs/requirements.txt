@@ -1,5 +1,5 @@
 torch>=1.9.1
-torchdiffeq>=0.2.2
+torchdiffeq==0.2.2
 numpy>=1.19.2
 scanpy>=1.7.1
 anndata>=0.7.5
