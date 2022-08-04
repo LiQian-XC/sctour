@@ -121,7 +121,7 @@ class Decoder(nn.Module):
         n_latent: int = 5,
         n_hidden: int = 128,
         batch_norm: bool = False,
-        loss_mode: Literal['mse', 'nb', 'zinb'] = 'mse',
+        loss_mode: Literal['mse', 'nb', 'zinb'] = 'nb',
     ):
         super().__init__()
         self.loss_mode = loss_mode

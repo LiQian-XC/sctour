@@ -23,6 +23,7 @@ setuptools.setup(
         'scipy>=1.5.2',
         'tqdm>=4.32.2',
         'scikit-learn>=0.24.1',
+        'leidenalg>=0.8.4',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

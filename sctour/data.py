@@ -67,7 +67,7 @@ def split_index(
     """
 
     n_train = int(np.ceil(n_cells * percent))
-    n_val = int(np.ceil(n_train * val_frac))
+    n_val = min(int(np.floor(n_train * val_frac)), n_cells - n_train)
     indices = np.random.permutation(n_cells)
     train_idx = np.random.choice(indices, n_train, replace = False)
     indices2 = np.setdiff1d(indices, train_idx)
@@ -102,3 +102,44 @@ class MakeDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx, :], self.library_size[idx]
+
+
+class BatchSampler():
+    """
+    A class to generate mini-batches through two rounds of randomization
+
+    Parameters
+    ----------
+    n
+        Total number of cells
+    batch_size
+        Size of mini-batches
+    drop_last
+        Whether or not drop the last batch when its size is smaller than the batch_size
+    """
+    def __init__(
+        self,
+        n: int,
+        batch_size: int,
+        drop_last: bool = False,
+    ):
+        self.batch_size = batch_size
+        self.n = n
+        self.drop_last = drop_last
+
+    def __iter__(self):
+        seq_n = torch.randperm(self.n)
+        lb = self.n // self.batch_size
+        idxs = np.arange(self.n)
+        for i in range(lb):
+            idx = np.random.choice(idxs, self.batch_size, replace=False)
+            yield seq_n[idx].tolist()
+            idxs = np.setdiff1d(idxs, idx)
+        if (not self.drop_last) and (len(idxs) > 0):
+            yield seq_n[idxs].tolist()
+
+    def __len__(self):
+        if self.drop_last:
+            return self.n // self.batch_size
+        else:
+            return int(np.ceil(self.n / self.batch_size))

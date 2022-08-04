@@ -13,7 +13,7 @@ from collections import defaultdict
 
 from .model import TNODE
 from ._utils import get_step_size
-from .data import split_data, MakeDataset
+from .data import split_data, MakeDataset, BatchSampler
 
 
 ##reverse time
@@ -60,11 +60,18 @@ class Trainer:
     loss_mode
         The mode for calculating the reconstruction error.
         (Default: `'nb'`)
+        Three modes are included
+        ``'mse'``: mean squared error
+        ``'nb'``: negative binomial conditioned likelihood
+        ``'zinb'``: zero-inflated negative binomial conditioned likelihood
     nepoch
         Number of epochs.
     batch_size
         The batch size during training.
         (Default: 1024)
+    drop_last
+        Whether or not drop the last batch when its size is smaller than the batch_size
+        (Default: `False`)
     lr
         The learning rate.
         (Default: 1e-3)
@@ -101,6 +108,7 @@ class Trainer:
         loss_mode: Literal['mse', 'nb', 'zinb'] = 'nb',
         nepoch: Optional[int] = None,
         batch_size: int = 1024,
+        drop_last: bool = False,
         lr: float = 1e-3,
         wt_decay: float = 1e-6,
         eps: float = 0.01,
@@ -109,16 +117,45 @@ class Trainer:
         use_gpu: bool = True,
     ):
         self.loss_mode = loss_mode
+        if self.loss_mode not in ['mse', 'nb', 'zinb']:
+            raise ValueError(f"`loss_mode` must be one of ['mse', 'nb', 'zinb'], but input was '{self.loss_mode}'.")
+
+        if (alpha_recon_lec < 0) or (alpha_recon_lec > 1):
+            raise ValueError('`alpha_recon_lec` must be between 0 and 1.')
+        if (alpha_recon_lode < 0) or (alpha_recon_lode > 1):
+            raise ValueError('`alpha_recon_lode` must be between 0 and 1.')
+        if alpha_recon_lec + alpha_recon_lode != 1:
+            raise ValueError('The sum of `alpha_recon_lec` and `alpha_recon_lode` must be 1.')
+
         self.adata = adata
-        self.percent = percent
-        self.val_frac = val_frac
+        if 'n_genes_by_counts' not in self.adata.obs:
+            raise KeyError("`n_genes_by_counts` not found in `.obs` of the AnnData. Please run `scanpy.pp.calculate_qc_metrics` first to calculate the number of genes detected in each cell.")
+        if loss_mode == 'mse':
+            if (self.adata.X.min() < 0) or (self.adata.X.max() > np.log1p(1e6)):
+                raise ValueError("Invalid expression matrix in `.X`. `mse` mode expects log1p(normalized expression) in `.X` of the AnnData.")
+        else:
+            X = self.adata.X.data if sparse.issparse(self.adata.X) else self.adata.X
+            if (X.min() < 0) or np.any(~np.equal(np.mod(X, 1), 0)):
+                raise ValueError(f"Invalid expression matrix in `.X`. `{self.loss_mode}` mode expects raw UMI counts in `.X` of the AnnData.")
+            else:
+                self.adata.X = np.log1p(self.adata.X)
+
         self.n_cells = adata.n_obs
         self.batch_size = batch_size
+        self.drop_last = drop_last
+        self.percent = percent
         if self.percent is None:
             if self.n_cells > 10000:
                 self.percent = .2
             else:
                 self.percent = .9
+        else:
+            if (self.percent < 0) or (self.percent > 1):
+                raise ValueError("`percent` must be between 0 and 1.")
+        self.val_frac = val_frac
+        if (self.val_frac < 0) or (self.val_frac > 1):
+            raise ValueError('`val_frac` must be between 0 and 1.')
+
         if nepoch is None:
             ncells = round(self.n_cells * self.percent)
             self.nepoch = np.min([round((10000 / ncells) * 400), 400])
@@ -137,8 +174,15 @@ class Trainer:
 #       torch.backends.cudnn.benchmark = False
 #       torch.use_deterministic_algorithms(True)
 
+        gpu = torch.cuda.is_available() and use_gpu
+        if gpu:
+            torch.cuda.manual_seed(random_state)
+            self.device = torch.device('cuda')
+        else:
+            self.device = torch.device('cpu')
         self.n_int = adata.n_vars
         self.model_kwargs = dict(
+            device = self.device,
             n_int = self.n_int,
             n_latent = n_latent,
             n_ode_hidden = n_ode_hidden,
@@ -154,14 +198,6 @@ class Trainer:
         self.model = TNODE(**self.model_kwargs)
         self.log = defaultdict(list)
 
-        gpu = torch.cuda.is_available() and use_gpu
-        if gpu:
-            torch.cuda.manual_seed(random_state)
-            self.device = torch.device('cuda')
-        else:
-            self.device = torch.device('cpu')
-        self.model.to(self.device)
-
 
     def get_data_loaders(self) -> None:
         """
@@ -172,6 +208,8 @@ class Trainer:
         self.train_dataset = MakeDataset(train_data)
         self.val_dataset = MakeDataset(val_data)
 
+#        sampler = BatchSampler(train_data.n_obs, self.batch_size, self.drop_last)
+#        self.train_dl = DataLoader(self.train_dataset, batch_sampler = sampler)
         self.train_dl = DataLoader(self.train_dataset, batch_size = self.batch_size, shuffle = True)
         self.val_dl = DataLoader(self.val_dataset, batch_size = self.batch_size)
 
@@ -259,7 +297,7 @@ class Trainer:
     @torch.no_grad()
     def get_time(self) -> np.ndarray:
         """
-        Get the time for all cells.
+        Get the developmental pseudotime for all cells.
 
         Returns
         ----------
@@ -277,7 +315,7 @@ class Trainer:
 
         ## The model might return reversed time. Check this based on number of genes expressed in cells
         if self.time_reverse is None:
-            n_genes = torch.tensor(self.adata.obs['n_genes_by_counts'].values).float().log().to(self.device)
+            n_genes = torch.tensor(self.adata.obs['n_genes_by_counts'].values).float().log1p().to(self.device)
             m_ts = ts.mean()
             m_ngenes = n_genes.mean()
             beta_direction = (ts * n_genes).sum() - len(ts) * m_ts * m_ngenes
@@ -303,9 +341,9 @@ class Trainer:
         Parameters
         ----------
         T
-            The estimated time for each cell.
+            The estimated pseudotime for each cell.
         Z
-            The latent space for each cell.
+            The latent representation for each cell.
 
         Returns
         ----------
@@ -314,12 +352,16 @@ class Trainer:
         """
 
         self.model.eval()
-        Z = torch.tensor(Z).to(self.device)
-        T = torch.tensor(T).to(self.device)
+        if not (isinstance(T, np.ndarray) and isinstance(Z, np.ndarray)):
+            raise TypeError('The inputs must be numpy arrays.')
+        Z = torch.tensor(Z)
+        T = torch.tensor(T)
+        if self.time_reverse is None:
+            raise RuntimeError('It seems you did not run get_time() function first. Please run get_time() before you run get_vector_field().')
         direction = 1
         if self.time_reverse:
             direction = -1
-        return direction * self.model.lode_func(T, Z).cpu().numpy()
+        return direction * self.model.lode_func(T, Z).numpy()
 
 
     def save_model(
@@ -328,12 +370,12 @@ class Trainer:
         save_prefix: str,
     ) -> None:
         """
-        Save the model.
+        Save the trained model.
 
         Parameters
         ----------
         save_dir
-            The directory where the model is saved.
+            The directory where the model will be saved.
         save_prefix
             The prefix for model name.
         """
@@ -366,17 +408,17 @@ class Trainer:
         model: Optional[str] = None,
     ):
         """
-        Get the latent representations.
+        Get the latent representations of cells.
 
         Parameters
         ----------
         X
-            The data matrix.
+            The data matrix. Only provided when you want to get the latent representations for data not used for training.
         alpha_z
             Scaling factor for encoder-derived latent space.
             (Default: 0.5)
         alpha_predz
-            Scaling factor for ODE-solver latent space.
+            Scaling factor for ODE-solver-derived latent space.
             (Default: 0.5)
         step_size
             Step size during integration.
@@ -384,19 +426,25 @@ class Trainer:
             Whether to perform step-wise integration by providing just two time points at a time.
             (Default: `False`)
         batch_size
-            Batch size for getting the latent space.
+            Batch size during getting the latent space. The default is no mini-batching.
         model
-            The model used to get the latent space.
+            The model used to get the latent space. Only provided when you use the saved model.
 
         Returns
         ----------
         tuple
-            3-tuple of mixed latent space, encoder-derived latent space, and ODE-solver latent space.
+            3-tuple of mixed latent space, encoder-derived latent space, and ODE-solver-derived latent space.
         """
 
         model = self.get_model(model)
-        model.to(self.device)
         model.eval()
+
+        if (alpha_z < 0) or (alpha_z > 1):
+            raise ValueError('`alpha_z` must be between 0 and 1.')
+        if (alpha_predz < 0) or (alpha_predz > 1):
+            raise ValueError('`alpha_predz` must be between 0 and 1.')
+        if alpha_z + alpha_predz != 1:
+            raise ValueError('The sum of `alpha_z` and `alpha_predz` must be 1.')
 
         if X is None:
             X = self.adata.X
@@ -404,12 +452,12 @@ class Trainer:
             X = X.A
         X = torch.tensor(X).to(self.device)
         T, qz_mean, qz_logvar = model.encoder(X)
-        T = T.ravel()
-        epsilon = torch.randn(qz_mean.size()).to(self.device)
-        zs = epsilon * torch.exp(.5 * qz_logvar) + qz_mean
+        T = T.ravel().cpu()
+        epsilon = torch.randn(qz_mean.size())
+        zs = epsilon * torch.exp(.5 * qz_logvar.cpu()) + qz_mean.cpu()
 
-        sort_T, sort_idx, sort_ridx = np.unique(T.cpu(), return_index=True, return_inverse=True)
-        sort_T = torch.tensor(sort_T).to(self.device)
+        sort_T, sort_idx, sort_ridx = np.unique(T, return_index=True, return_inverse=True)
+        sort_T = torch.tensor(sort_T)
         sort_zs = zs[sort_idx]
 
         pred_zs = []
@@ -451,16 +499,17 @@ class Trainer:
 
         pred_zs = torch.cat(pred_zs)
         pred_zs = pred_zs[sort_ridx]
-        mix_zs = alpha_z * zs.cpu() + alpha_predz * pred_zs.cpu()
+        mix_zs = alpha_z * zs + alpha_predz * pred_zs
 
-        return mix_zs.numpy(), zs.cpu().numpy(), pred_zs.cpu().numpy()
+        return mix_zs.numpy(), zs.numpy(), pred_zs.numpy()
 
 
     @torch.no_grad()
     def predict_time(
         self,
-        adata: AnnData,
-        get_ltsp: bool = True,
+        adata: Optional[AnnData] = None,
+        reverse: bool = False,
+        get_ltsp: bool = False,
         mode: Literal['coarse', 'fine'] = 'fine',
         alpha_z: float = .5,
         alpha_predz: float = .5,
@@ -470,46 +519,76 @@ class Trainer:
         model: Optional[str] = None,
     ) -> Union[np.ndarray, tuple]:
         """
-        Predict the time of cells given their transcriptomes.
+        Predict the pseudotime of cells given their transcriptomes, as well as their latent representations when get_ltsp is set to True.
 
         Parameters
         ----------
         adata
-            An :class:`~anndata.AnnData` object.
+            An :class:`~anndata.AnnData` object from the dataset that will be predicted.
+        reverse
+            Whether to reverse the predicted pseudotime. When the pseudotime returned by get_time() function was in reverse order and you used the post-inference adjustment (reverse_time() function), please set this parameter to `True`.
+            (Default: `False`)
         get_ltsp
             Whether to get the latent space as well.
+            (Default: `False`)
         mode
             The method for getting the latent space.
+            Two modes are included
+            ``'fine'``: take the training dataset into consideration when predicting the latent space.
+            ``'coarse'``: derive the latent space of the given dataset directly without involving the training data.
         alpha_z
             Scaling factor for encoder-derived latent space.
+            (Default: 0.5)
         alpha_predz
-            Scaling factor for ODE-solver latent space.
+            Scaling factor for ODE-solver-derived latent space.
+            (Default: 0.5)
         step_size
             The step size during integration.
         step_wise
             Whether to perform step-wise integration by providing just two time points at a time.
+            (Default: `False`)
         batch_size
-            Batch size for getting the latent space.
+            Batch size during getting the latent space. The default is no mini-batching.
         model
-            The model used to predict the time.
+            The model used to predict the pseudotime. Only provided when using the saved model.
 
         Returns
         ----------
-        The predicted time and (if `get_ltsp = True`) the latent space.
+        The predicted pseudotime and (if `get_ltsp = True`) the latent space.
         """
 
         model = self.get_model(model)
-        model.to(self.device)
         model.eval()
 
-        adata = adata[:, self.adata.var_names]
-        X = adata.X
+        if self.time_reverse is None:
+            raise RuntimeError('It seems you did not run get_time() function first. Please run get_time() using training data before you run predict_time() using test data.')
+
+        if adata is None:
+            X = self.adata.X
+        else:
+            if len(adata.var_names.intersection(self.adata.var_names)) != self.adata.n_vars:
+                raise ValueError("The given AnnData must contain all the genes that are used for model training from the training dataset.")
+
+            adata = adata[:, self.adata.var_names]
+            X = adata.X
+            if model.loss_mode == 'mse':
+                if (X.min() < 0) or (X.max() > np.log1p(1e6)):
+                    raise ValueError("Invalid expression matrix in `.X`. Model trained from `mse` mode expects log1p(normalized expression) in `.X` of the AnnData.")
+            else:
+                data = X.data if sparse.issparse(X) else X
+                if (data.min() < 0) or np.any(~np.equal(np.mod(data, 1), 0)):
+                    raise ValueError(f"Invalid expression matrix in `.X`. Model trained from `{model.loss_mode}` mode expects raw UMI counts in `.X` of the AnnData.")
+                else:
+                    X = np.log1p(X)
+
         if sparse.issparse(X):
             X = X.A
         X = torch.tensor(X).to(self.device)
         ts, _, _ = model.encoder(X)
         ts = ts.ravel()
         if self.time_reverse:
+            ts = 1 - ts
+        if reverse:
             ts = 1 - ts
 
         if get_ltsp:
@@ -528,7 +607,7 @@ class Trainer:
                 if sparse.issparse(X2):
                     X2 = X2.A
                 mix_zs, zs, pred_zs = self.get_latentsp(
-                                        X = np.vstack((X.cpu(), X2)),
+                                        X = np.vstack((X.cpu().numpy(), X2)),
                                         alpha_z = alpha_z,
                                         alpha_predz = alpha_predz,
                                         step_size = step_size,
@@ -547,92 +626,108 @@ class Trainer:
 
 
     @torch.no_grad()
-    def predict_transcriptome(
+    def predict_ltsp_from_time(
         self,
-        T: float,
+        T: np.ndarray,
+        reverse: bool = False,
         step_wise: bool = True,
         step_size: Optional[int] = None,
         alpha_z: float = 0.5,
         alpha_predz: float = 0.5,
-        k: int = 5,
+        k: int = 20,
         model: Optional[str] = None,
     ) -> np.ndarray:
         """
-        Predict the transcriptomes for given time points.
+        Predict the transcriptomic latent space for unobserved time intervals.
 
         Parameters
         ----------
         T
-            Time points with values between 0 and 1.
+            A 1D numpy array containing the time points (unobserved time interval) with values between 0 and 1.
+        reverse
+            Whether to reverse the reference pseudotime from training data. When the pseudotime returned by get_time() function was in reverse order and you used the post-inference adjustment (reverse_time() function), please set this parameter to `True`.
+            (Default: `False`)
         step_wise
-            Whether to perform step-wise integration by providing just two time points at a time for training data.
+            Whether to perform step-wise integration by providing just two time points at a time when inferring the reference latent space from training data.
             (Default: `True`)
         step_size
             The step size during integration.
         alpha_z
-            Scaling factor for encoder-derived latent space for training data.
+            Scaling factor for encoder-derived latent space when inferring the reference latent space from training data.
             (Default: 0.5)
         alpha_predz
-            Scaling factor for ODE-solver latent space for training data.
+            Scaling factor for ODE-solver-derived latent space when inferring the reference latent space from training data.
             (Default: 0.5)
         k
-            The k nearest neighbors used to estimate the latent space.
-            (Default: 5)
+            The k nearest neighbors in the time space used to predict the latent space for each unobserved time point.
+            (Default: 20)
         model
-            The model used to predict the transcriptome.
+            The model used to predict the transcriptomic latent space. Only provided when using the saved model.
 
         Returns
         ----------
         :class:`~numpy.ndarray`
-            Predicted latent space.
+            Predicted latent space for the unobserved time interval.
         """
 
         model = self.get_model(model)
-        model.to(self.device)
         model.eval()
 
-        T = torch.tensor(T).to(self.device)
-        ## get the time and latent space of the original data
-        mix_zs, zs, pred_zs = self.get_latentsp(step_wise = step_wise, step_size = step_size, model = model, alpha_z = alpha_z, alpha_predz = alpha_predz)
-        ts = self.predict_time(self.adata, get_ltsp = False, model = model)
-#       zs = torch.tensor(zs).to(self.device)
-        zs = torch.tensor(mix_zs).to(self.device)
-        ts = torch.tensor(ts).to(self.device)
+        if not isinstance(T, np.ndarray):
+            raise TypeError("The input time interval must be a numpy array.")
+        if len(T.shape) > 1:
+            raise TypeError("The input time interval must be a 1D numpy array.")
+        if np.any(T < 0) or np.any(T > 1):
+            raise ValueError("The provided time points must be between 0 and 1.")
 
-        pred_T_zs = torch.empty((len(T), model.n_latent))
-        for i, t in enumerate(T):
+        ridx = np.random.permutation(len(T))
+        rT = torch.tensor(T[ridx])
+        ## get the reference time and latent space from the training data
+        mix_zs, zs, pred_zs = self.get_latentsp(step_wise = step_wise, step_size = step_size, model = model, alpha_z = alpha_z, alpha_predz = alpha_predz)
+        ts = self.predict_time(reverse = reverse, get_ltsp = False, model = model)
+#       zs = torch.tensor(zs).to(self.device)
+        zs = torch.tensor(mix_zs)
+        ts = torch.tensor(ts)
+
+        pred_T_zs = torch.empty((len(rT), model.n_latent))
+        for i, t in enumerate(rT):
             diff = torch.abs(t - ts)
             idxs = torch.argsort(diff)
-            n = (diff == 0).sum()
-            idxs = idxs[n:(k + n)]
-            k_zs = torch.empty((k, model.n_latent))
-            for j, idx in enumerate(idxs):
-                z0 = zs[idx]
-                t0 = ts[idx]
-                pred_t = torch.stack((t0, t))
-                if pred_t[0] < pred_t[1]:
-                    options = get_step_size(step_size, pred_t[0], pred_t[-1], len(pred_t))
-                else:
-                    options = get_step_size(step_size, pred_t[-1], pred_t[0], len(pred_t))
-                k_zs[j] = odeint(
-                                model.lode_func,
-                                z0,
-                                pred_t,
-                                method = model.ode_method,
-                                options = options
-                            )[1]
-            k_zs = torch.mean(k_zs, dim = 0)
-            pred_T_zs[i] = k_zs
-            ts = torch.cat((ts, t.unsqueeze(0)))
-            zs = torch.cat((zs, k_zs.unsqueeze(0).to(self.device)))
+#            n = (diff == 0).sum()
+#            idxs = idxs[n:(k + n)]
+            if (diff == 0).any():
+                pred_T_zs[i] = zs[idxs[0]]
+            else:
+                idxs = idxs[:k]
+                k_zs = torch.empty((k, model.n_latent))
+                for j, idx in enumerate(idxs):
+                    z0 = zs[idx]
+                    t0 = ts[idx]
+                    pred_t = torch.stack((t0, t))
+                    if pred_t[0] < pred_t[1]:
+                        options = get_step_size(step_size, pred_t[0], pred_t[-1], len(pred_t))
+                    else:
+                        options = get_step_size(step_size, pred_t[-1], pred_t[0], len(pred_t))
+                    k_zs[j] = odeint(
+                                    model.lode_func,
+                                    z0,
+                                    pred_t,
+                                    method = model.ode_method,
+                                    options = options
+                                )[1]
+                k_zs = torch.mean(k_zs, dim = 0)
+                pred_T_zs[i] = k_zs
+                ts = torch.cat((ts, t.unsqueeze(0)))
+                zs = torch.cat((zs, k_zs.unsqueeze(0)))
 
+        pred_T_zs = pred_T_zs[np.argsort(ridx)]
 #       return pred_T_zs.numpy(), pred_zs
         return pred_T_zs.numpy()
 
 
     def get_model(self, model):
         """
-        Get the model for inference.
+        Get the model for inference/prediction (for internal use).
         """
 
         if isinstance(model, str):
