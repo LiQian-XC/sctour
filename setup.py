@@ -6,7 +6,7 @@ def get_readme():
 
 setuptools.setup(
     name='sctour',
-    version='0.1.2',
+    version='0.1.3',
     author='Qian Li',
     author_email='liqian.picb@gmail.com',
     description='a deep learning architecture for robust inference and accurate prediction of cellular dynamics',
@@ -16,7 +16,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'torch>=1.9.1',
-        'torchdiffeq==0.2.2',
+        'torchdiffeq>=0.2.2',
         'numpy>=1.19.2',
         'scanpy>=1.7.1',
         'anndata>=0.7.5',
