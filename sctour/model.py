@@ -117,16 +117,16 @@ class TNODE(nn.Module):
         x = x[index]
         z = z[index]
         y = y[index]
-        qz_mean = qz_mean[index]
-        qz_logvar = qz_logvar[index]
+#        qz_mean = qz_mean[index]
+#        qz_logvar = qz_logvar[index]
         index2 = (T[:-1] != T[1:])
         index2 = torch.cat((index2, torch.tensor([True]).to(index2.device))) ## index2 is used to get unique time points as odeint requires strictly increasing/decreasing time points
         T = T[index2]
         x = x[index2]
         z = z[index2]
         y = y[index2]
-        qz_mean = qz_mean[index2]
-        qz_logvar = qz_logvar[index2]
+#        qz_mean = qz_mean[index2]
+#        qz_logvar = qz_logvar[index2]
 
         ## infer the latent space through ODE solver based on z0, t, and LatentODEfunc
         z0 = z[0]

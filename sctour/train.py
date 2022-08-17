@@ -137,8 +137,6 @@ class Trainer:
             X = self.adata.X.data if sparse.issparse(self.adata.X) else self.adata.X
             if (X.min() < 0) or np.any(~np.equal(np.mod(X, 1), 0)):
                 raise ValueError(f"Invalid expression matrix in `.X`. `{self.loss_mode}` mode expects raw UMI counts in `.X` of the AnnData.")
-            else:
-                self.adata.X = np.log1p(self.adata.X)
 
         self.n_cells = adata.n_obs
         self.batch_size = batch_size
@@ -205,8 +203,8 @@ class Trainer:
         """
 
         train_data, val_data = split_data(self.adata, self.percent, self.val_frac)
-        self.train_dataset = MakeDataset(train_data)
-        self.val_dataset = MakeDataset(val_data)
+        self.train_dataset = MakeDataset(train_data, self.loss_mode)
+        self.val_dataset = MakeDataset(val_data, self.loss_mode)
 
 #        sampler = BatchSampler(train_data.n_obs, self.batch_size, self.drop_last)
 #        self.train_dl = DataLoader(self.train_dataset, batch_sampler = sampler)
@@ -224,10 +222,10 @@ class Trainer:
             for tepoch in range(t.total):
                 train_loss = self.on_epoch_train(self.train_dl)
                 val_loss = self.on_epoch_val(self.val_dl)
-                self.log['train_loss'].append(train_loss.item())
-                self.log['validation_loss'].append(val_loss.item())
+                self.log['train_loss'].append(train_loss)
+                self.log['validation_loss'].append(val_loss)
                 t.set_description(f"Epoch {tepoch + 1}")
-                t.set_postfix({'train_loss': train_loss.item(), 'val_loss': val_loss.item()}, refresh=False)
+                t.set_postfix({'train_loss': train_loss, 'val_loss': val_loss}, refresh=False)
                 t.update()
 
 
@@ -257,7 +255,7 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
 
-            total_loss += loss * X.size(0)
+            total_loss += loss.item() * X.size(0)
             ss += X.size(0)
 
         train_loss = total_loss/ss
@@ -287,7 +285,7 @@ class Trainer:
             X = X.to(self.device)
             Y = Y.to(self.device)
             loss, recon_loss_ec, recon_loss_ode, kl_div, z_div = self.model(X, Y)
-            total_loss += loss * X.size(0)
+            total_loss += loss.item() * X.size(0)
             ss += X.size(0)
 
         val_loss = total_loss/ss
@@ -307,6 +305,8 @@ class Trainer:
 
         self.model.eval()
         X = self.adata.X
+        if self.loss_mode in ['nb', 'zinb']:
+            X = np.log1p(X)
         if sparse.issparse(X):
             X = X.A
         X = torch.tensor(X).to(self.device)
@@ -334,6 +334,7 @@ class Trainer:
         self,
         T: np.ndarray,
         Z: np.ndarray,
+        model: Optional[str] = None,
     ) -> np.ndarray:
         """
         Get the vector field.
@@ -344,6 +345,8 @@ class Trainer:
             The estimated pseudotime for each cell.
         Z
             The latent representation for each cell.
+        model
+            The model used to get the vector field. Only provided when using the saved model.
 
         Returns
         ----------
@@ -351,7 +354,8 @@ class Trainer:
             The estimated vector field.
         """
 
-        self.model.eval()
+        model = self.get_model(model)
+        model.eval()
         if not (isinstance(T, np.ndarray) and isinstance(Z, np.ndarray)):
             raise TypeError('The inputs must be numpy arrays.')
         Z = torch.tensor(Z)
@@ -361,7 +365,7 @@ class Trainer:
         direction = 1
         if self.time_reverse:
             direction = -1
-        return direction * self.model.lode_func(T, Z).numpy()
+        return direction * model.lode_func(T, Z).numpy()
 
 
     def save_model(
@@ -448,6 +452,8 @@ class Trainer:
 
         if X is None:
             X = self.adata.X
+            if model.loss_mode in ['nb', 'zinb']:
+                X = np.log1p(X)
         if sparse.issparse(X):
             X = X.A
         X = torch.tensor(X).to(self.device)
@@ -509,7 +515,7 @@ class Trainer:
         self,
         adata: Optional[AnnData] = None,
         reverse: bool = False,
-        get_ltsp: bool = False,
+        get_ltsp: bool = True,
         mode: Literal['coarse', 'fine'] = 'fine',
         alpha_z: float = .5,
         alpha_predz: float = .5,
@@ -565,6 +571,8 @@ class Trainer:
 
         if adata is None:
             X = self.adata.X
+            if model.loss_mode in ['nb', 'zinb']:
+                X = np.log1p(X)
         else:
             if len(adata.var_names.intersection(self.adata.var_names)) != self.adata.n_vars:
                 raise ValueError("The given AnnData must contain all the genes that are used for model training from the training dataset.")
@@ -604,6 +612,8 @@ class Trainer:
                                         )
             if mode == 'fine':
                 X2 = self.adata.X
+                if model.loss_mode in ['nb', 'zinb']:
+                    X2 = np.log1p(X2)
                 if sparse.issparse(X2):
                     X2 = X2.A
                 mix_zs, zs, pred_zs = self.get_latentsp(

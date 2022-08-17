@@ -90,8 +90,11 @@ class MakeDataset(Dataset):
     def __init__(
         self,
         adata: AnnData,
+        loss_mode: str,
     ):
         X = adata.X
+        if loss_mode in ['nb', 'zinb']:
+            X = np.log1p(X)
         if sparse.issparse(X):
             X = X.A
         self.data = torch.tensor(X)
