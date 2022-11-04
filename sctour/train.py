@@ -197,7 +197,7 @@ class Trainer:
         self.log = defaultdict(list)
 
 
-    def get_data_loaders(self) -> None:
+    def _get_data_loaders(self) -> None:
         """
         Generate Data Loaders for training and validation datasets.
         """
@@ -213,15 +213,15 @@ class Trainer:
 
 
     def train(self):
-        self.get_data_loaders()
+        self._get_data_loaders()
 
         params = filter(lambda p: p.requires_grad, self.model.parameters())
         self.optimizer = torch.optim.Adam(params, lr = self.lr, weight_decay = self.wt_decay, eps = self.eps)
 
         with tqdm(total=self.nepoch, unit='epoch') as t:
             for tepoch in range(t.total):
-                train_loss = self.on_epoch_train(self.train_dl)
-                val_loss = self.on_epoch_val(self.val_dl)
+                train_loss = self._on_epoch_train(self.train_dl)
+                val_loss = self._on_epoch_val(self.val_dl)
                 self.log['train_loss'].append(train_loss)
                 self.log['validation_loss'].append(val_loss)
                 t.set_description(f"Epoch {tepoch + 1}")
@@ -229,7 +229,7 @@ class Trainer:
                 t.update()
 
 
-    def on_epoch_train(self, DL) -> float:
+    def _on_epoch_train(self, DL) -> float:
         """
         Go through the model and update the model parameters.
 
@@ -263,7 +263,7 @@ class Trainer:
 
 
     @torch.no_grad()
-    def on_epoch_val(self, DL) -> float:
+    def _on_epoch_val(self, DL) -> float:
         """
         Validate using validation dataset.
 
@@ -354,7 +354,7 @@ class Trainer:
             The estimated vector field.
         """
 
-        model = self.get_model(model)
+        model = self._get_model(model)
         model.eval()
         if not (isinstance(T, np.ndarray) and isinstance(Z, np.ndarray)):
             raise TypeError('The inputs must be numpy arrays.')
@@ -440,7 +440,7 @@ class Trainer:
             3-tuple of mixed latent space, encoder-derived latent space, and ODE-solver-derived latent space.
         """
 
-        model = self.get_model(model)
+        model = self._get_model(model)
         model.eval()
 
         if (alpha_z < 0) or (alpha_z > 1):
@@ -563,7 +563,7 @@ class Trainer:
         The predicted pseudotime and (if `get_ltsp = True`) the latent space.
         """
 
-        model = self.get_model(model)
+        model = self._get_model(model)
         model.eval()
 
         if self.time_reverse is None:
@@ -680,7 +680,7 @@ class Trainer:
             Predicted latent space for the unobserved time interval.
         """
 
-        model = self.get_model(model)
+        model = self._get_model(model)
         model.eval()
 
         if not isinstance(T, np.ndarray):
@@ -735,7 +735,7 @@ class Trainer:
         return pred_T_zs.numpy()
 
 
-    def get_model(self, model):
+    def _get_model(self, model):
         """
         Get the model for inference/prediction (for internal use).
         """

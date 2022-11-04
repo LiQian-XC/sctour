@@ -4,3 +4,4 @@ build_doc.sh
 build/
 build_wheel.sh
 /dist/
+docs/source/generated/
