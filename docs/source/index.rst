@@ -1,7 +1,7 @@
 scTour: a deep learning architecture for robust inference and accurate prediction of cellular dynamics
 ======================================================================================================
 
-.. image:: https://github.com/LiQian-XC/sctour/blob/main/docs/source/_static/img/scTour_head_image.png
+.. image:: https://raw.githubusercontent.com/LiQian-XC/sctour/main/docs/source/_static/img/scTour_head_image.png 
    :width: 400px
    :align: left
 
