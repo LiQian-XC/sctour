@@ -1,7 +1,7 @@
 
 # scTour
 
-<img src="https://github.com/LiQian-XC/sctour/blob/ae9b45e69941bcabf3ad498dde781eb991168b83/docs/source/_static/img/scTour_head_image.png" width="400px" align="left">
+<img src="https://github.com/LiQian-XC/sctour/blob/main/docs/source/_static/img/scTour_head_image.png" width="400px" align="left">
 
 scTour is an innovative and comprehensive method for dissecting cellular dynamics by analysing datasets derived from single-cell genomics.
 
