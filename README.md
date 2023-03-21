@@ -13,7 +13,7 @@ It further generalises these functionalities to a multi-task architecture for wi
 
 - cell pseudotime estimation with no need for specifying starting cells.
 - transcriptomic vector field inference with no discrimination between spliced and unspliced mRNAs.
-- cell trajectory reconstruction using latent space that incorporates both intrinsic transcriptomic structure and extrinsic pseudotime ordering.
+- latent space mapping by combining intrinsic transcriptomic structure with extrinsic pseudotime ordering.
 - model-based prediction of pseudotime, vector field, and latent space for query cells/datasets/time intervals.
 - insensitive to batch effects; robust to cell subsampling; scalable to large datasets.
 
@@ -33,4 +33,4 @@ Full documentation can be found [here](https://sctour.readthedocs.io/en/latest/)
 
 ## Reference
 
-[Qian Li, A deep learning architecture for robust inference and accurate prediction of cellular dynamics. bioRxiv, 2022](https://www.biorxiv.org/content/10.1101/2022.04.17.488600v1)
+[Qian Li, scTour: a deep learning architecture for robust inference and accurate prediction of cellular dynamics. bioRxiv, 2022](https://www.biorxiv.org/content/10.1101/2022.04.17.488600v1)
