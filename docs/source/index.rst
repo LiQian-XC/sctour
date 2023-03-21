@@ -24,6 +24,7 @@ Installation
 ------------
 
 scTour requires Python ≥ 3.7::
+
     pip install sctour
 
 Reference

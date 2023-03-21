@@ -5,4 +5,4 @@ Model training and prediction
    :toctree: generated/
    :nosignatures:
 
-   train.Trainer
+   sctour.train.Trainer
