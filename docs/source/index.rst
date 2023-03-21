@@ -1,5 +1,3 @@
-|PyPI| |Docs|
-
 scTour: a deep learning architecture for robust inference and accurate prediction of cellular dynamics
 ======================================================================================================
 
@@ -50,8 +48,3 @@ Qian Li, scTour: a deep learning architecture for robust inference and accurate 
    api_train
    api_vf
 
-.. |PyPI| image:: https://img.shields.io/pypi/v/sctour.svg
-   :target: https://pypi.org/project/sctour
-
-.. |Docs| image:: https://readthedocs.org/projects/sctour/badge/?version=latest
-   :target: https://sctour.readthedocs.io
