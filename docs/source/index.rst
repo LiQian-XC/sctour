@@ -32,7 +32,7 @@ scTour requires Python ≥ 3.7::
 Reference
 ---------
 
-Qian Li, scTour: a deep learning architecture for robust inference and accurate prediction of cellular dynamics, 2022, `bioRxiv <https://www.biorxiv.org/content/10.1101/2022.04.17.488600v1>`_.
+Qian Li, scTour: a deep learning architecture for robust inference and accurate prediction of cellular dynamics, 2023, `Genome Biology <https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02988-9>`_.
 
 .. toctree::
    :maxdepth: 2
