@@ -6,7 +6,7 @@ def get_readme():
 
 setuptools.setup(
     name='sctour',
-    version='0.1.3',
+    version='1.0.0',
     author='Qian Li',
     author_email='liqian.picb@gmail.com',
     description='a deep learning architecture for robust inference and accurate prediction of cellular dynamics',

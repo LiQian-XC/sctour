@@ -32,7 +32,7 @@ def cosine_similarity(
     adata
         An :class:`~anndata.AnnData` object.
     reverse
-        Whether to reverse the direction of the vector field. When the pseudotime returned by get_time() function was in reverse order and you used the post-inference adjustment (reverse_time() function), please set this parameter to `True`.
+        Whether to reverse the direction of the vector field. When the pseudotime returned by `get_time()` function was in reverse order and you used the post-inference adjustment (`reverse_time()` function), please set this parameter to `True`.
         (Default: `False`)
     zs_key
         The key in `.obsm` for storing the latent space.
@@ -74,14 +74,18 @@ def cosine_similarity(
             logger.warn(f"Warning: the parameter `use_rep_neigh` in function `plot_vector_field` is not provided. Use `{zs_key}` in `.obsm` of the AnnData instead.")
         else:
             if use_rep_neigh not in adata.obsm:
-                raise KeyError(f"`{use_rep_neigh}` not found in `.obsm` of the AnnData. Please provide valid `use_rep_neigh` for neighbor detection.")
+                raise KeyError(
+                        f"`{use_rep_neigh}` not found in `.obsm` of the AnnData. Please provide valid `use_rep_neigh` for neighbor detection."
+                        )
         sc.pp.neighbors(adata, use_rep = use_rep_neigh, n_neighbors = n_neigh)
     n_neigh = adata.uns['neighbors']['params']['n_neighbors'] - 1
 #    indices_matrix = adata.obsp['distances'].indices.reshape(-1, n_neigh)
 
     if t_key is not None:
         if t_key not in adata.obs:
-            raise KeyError(f"`{t_key}` not found in `.obs` of the AnnData. Please provide valid `t_key` for estimated pseudotime.")
+            raise KeyError(
+                    f"`{t_key}` not found in `.obs` of the AnnData. Please provide valid `t_key` for estimated pseudotime."
+                    )
         ts = adata.obs[t_key].values
         indices_matrix2 = np.zeros((ncells, n_neigh), dtype = int)
         for i in range(ncells):
@@ -241,7 +245,7 @@ def vector_field_embedding_grid(
     Returns
     ----------
     tuple
-        The embedding and unitary displacement vectors in grid level.
+        The embedding and unitary displacement vectors at grid level.
     """
 
     grs = []
@@ -316,6 +320,8 @@ def plot_vector_field(
     grid_arrowcolor: str = 'grey',
     grid_arrowlength: int = 1,
     grid_arrowsize: int = 1,
+    show: bool = True,
+    save: Optional[Union[str, bool]] = None,
 #    color: Optional[str] = None,
 #    ax: Optional[Axes] = None,
     **kwargs,
@@ -331,7 +337,7 @@ def plot_vector_field(
     zs_key
         The key in `.obsm` for storing the latent space.
     reverse
-        Whether to reverse the direction of the vector field. When the pseudotime returned by get_time() function was in reverse order and you used the post-inference adjustment (reverse_time() function), please set this parameter to `True`.
+        Whether to reverse the direction of the vector field. When the pseudotime returned by `get_time()` function was in reverse order and you used the post-inference adjustment (`reverse_time()` function), please set this parameter to `True`.
         (Default: `False`)
     vf_key
         The key in `.obsm` for storing the vector field.
@@ -361,10 +367,10 @@ def plot_vector_field(
         The factor for scale in Gaussian pdf.
         (Default: 0.5)
     density
-        Percentage of cells to show when displaying the vector field in the per-cell level.
-        (Default: 1.)
+        Percentage of cells to show when displaying the vector field at per-cell level.
+        (Default: 1.0)
     grid
-        Whether to display vector field as arrows in grid level.
+        Whether to display vector field as arrows at grid level.
         (Default: `False`)
     stream
         Whether to display vector field as streamplot.
@@ -382,36 +388,50 @@ def plot_vector_field(
         The arrow size for streamplot.
         (Default: 1)
     grid_density
-        The grid-level density for showing vector field.
-        (Default: 1.)
+        The density for showing vector field as arrows at grid level.
+        (Default: 1.0)
     grid_arrowcolor
-        The arrow color when showing vector field as arrows in grid level.
+        The arrow color when showing vector field as arrows at grid level.
         (Default: `'grey'`)
     grid_arrowlength
-        The arrow length when showing vector field as arrows in grid level.
+        The arrow length when showing vector field as arrows at grid level.
         (Default: 1)
     grid_arrowsize
-        The arrow size when showing vector field as arrows in grid level.
+        The arrow size when showing vector field as arrows at grid level.
         (Default: 1)
+    show
+        Whether to show the plot.
+        (Default: `True`)
+    save
+        Whether to save the figure. If `True` or a `str`, the figure will be saved as 'sctour_vector_field.png' (if `True` provided) or a given filename (if a `str` provided).
     kwargs
         Parameters passed to :func:`scanpy.pl.embedding`.
 
     Returns
     ----------
-    :class:`~matplotlib.axes.Axes`
-        An :class:`~matplotlib.axes.Axes` object.
+    None
     """
 
     if zs_key not in adata.obsm:
-        raise KeyError(f"`{zs_key}` not found in `.obsm` of the AnnData. Please provide valid `zs_key` for latent space.")
+        raise KeyError(
+                f"`{zs_key}` not found in `.obsm` of the AnnData. Please provide valid `zs_key` for latent space."
+                )
     if vf_key not in adata.obsm:
-        raise KeyError(f"`{vf_key}` not found in `.obsm` of the AnnData. Please provide valid `vf_key` for vector field.")
+        raise KeyError(
+                f"`{vf_key}` not found in `.obsm` of the AnnData. Please provide valid `vf_key` for vector field."
+                )
     if E_key not in adata.obsm:
-        raise KeyError(f"`{E_key}` not found in `.obsm` of the AnnData. Please provide valid `E_key` for embedding.")
+        raise KeyError(
+                f"`{E_key}` not found in `.obsm` of the AnnData. Please provide valid `E_key` for embedding."
+                )
     if (grid_density < 0) or (grid_density > 1):
-        raise ValueError("`grid_density` must be between 0 and 1.")
+        raise ValueError(
+                "`grid_density` must be between 0 and 1."
+                )
     if (density < 0) or (density > 1):
-        raise ValueError("`density` must be between 0 and 1.")
+        raise ValueError(
+                "`density` must be between 0 and 1."
+                )
 
     ##calculate cosine similarity
     adata.obsp['cosine_similarity'] = cosine_similarity(
@@ -487,4 +507,12 @@ def plot_vector_field(
         )
         ax.quiver(E[:, 0], E[:, 1], V[:, 0], V[:, 1], **quiver_kwargs)
 
-    return ax
+    if save:
+        if isinstance(save, str):
+            plt.savefig(save)
+        else:
+            plt.savefig('sctour_vector_field.png')
+    if show:
+        plt.show()
+    if save:
+        plt.close()

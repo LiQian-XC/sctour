@@ -49,7 +49,9 @@ Qian Li, scTour: a deep learning architecture for robust inference and accurate 
    :hidden:
 
    api_train
+   api_predict
    api_vf
+   api_reverse_time
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/sctour.svg
    :target: https://pypi.org/project/sctour

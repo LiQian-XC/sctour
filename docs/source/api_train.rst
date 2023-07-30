@@ -1,4 +1,4 @@
-Model training and prediction
+Model training
 ==================================
 
 .. autosummary::
