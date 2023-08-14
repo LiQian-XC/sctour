@@ -19,10 +19,16 @@ It further generalises these functionalities to a multi-task architecture for wi
 
 ## Installation
 
-[![Python Versions](https://img.shields.io/badge/python-3.7+-brightgreen.svg)](https://pypi.org/project/sctour)
+[![PyPI](https://img.shields.io/pypi/v/sctour.svg?color=brightgreen&style=flat)](https://pypi.org/project/sctour)
 
 ```console
 pip install sctour
+```
+
+[![Conda](https://img.shields.io/conda/vn/conda-forge/sctour.svg?color=brightgreen&style=flat)](https://anaconda.org/conda-forge/sctour)
+
+```console
+conda install -c conda-forge sctour
 ```
 
 ## Documentation
