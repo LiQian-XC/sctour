@@ -96,7 +96,7 @@ class MakeDataset(Dataset):
         if loss_mode in ['nb', 'zinb']:
             X = np.log1p(X)
         if sparse.issparse(X):
-            X = X.A
+            X = X.toarray()
         self.data = torch.tensor(X)
         self.library_size = self.data.sum(-1)
 
